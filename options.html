@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SN Assistant — Options</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e8eaf6;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .header {
+      margin-bottom: 36px;
+    }
+
+    .header-logo {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #e8eaf6;
+    }
+
+    .header p {
+      font-size: 13px;
+      color: #7b82a8;
+      margin-top: 4px;
+    }
+
+    .card {
+      background: #1a1d27;
+      border: 1px solid #2e3352;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6c8bff;
+      margin-bottom: 20px;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #c5c8e0;
+      margin-bottom: 8px;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #7b82a8;
+      margin-top: 5px;
+    }
+
+    input[type="url"],
+    input[type="text"] {
+      width: 100%;
+      background: #0f1117;
+      border: 1px solid #2e3352;
+      border-radius: 8px;
+      color: #e8eaf6;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus {
+      border-color: #6c8bff;
+    }
+
+    input::placeholder {
+      color: #7b82a8;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toggle-info {
+      flex: 1;
+    }
+
+    .toggle-info strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #c5c8e0;
+    }
+
+    .toggle-info span {
+      font-size: 11px;
+      color: #7b82a8;
+    }
+
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+      margin-left: 16px;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #2e3352;
+      border-radius: 22px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      top: 3px;
+      background: #7b82a8;
+      border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background: rgba(108, 139, 255, 0.2);
+      border: 1px solid #6c8bff;
+    }
+
+    .toggle input:checked + .toggle-slider::before {
+      transform: translateX(18px);
+      background: #6c8bff;
+    }
+
+    .btn-save {
+      background: #6c8bff;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 24px;
+      transition: background 0.15s;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-save:hover {
+      background: #8aa0ff;
+    }
+
+    .status {
+      font-size: 12px;
+      text-align: center;
+      margin-top: 12px;
+      height: 18px;
+      color: #5effa0;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .status.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-logo">⚡</div>
+      <h1>SN Assistant</h1>
+      <p>Configure your AI assistant for ServiceNow</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Backend</div>
+      <div class="field">
+        <label for="backendUrl">Vercel Function URL</label>
+        <input
+          type="url"
+          id="backendUrl"
+          placeholder="https://your-project.vercel.app"
+        />
+        <p class="hint">Your deployed Vercel project URL (without /api/chat)</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Behavior</div>
+      <div class="field">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Auto-show panel</strong>
+            <span>Open automatically when a script editor is detected</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="autoShow" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-save" id="btnSave">Save settings</button>
+    <div class="status" id="status">✓ Settings saved</div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
