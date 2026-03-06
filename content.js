@@ -219,12 +219,15 @@ async function runAction(action, question = '') {
 
   try {
     // Leer la URL del backend desde storage
-    const { backendUrl } = await chrome.storage.sync.get({ backendUrl: '' });
+    let { backendUrl } = await chrome.storage.sync.get({ backendUrl: '' });
 
     if (!backendUrl) {
       showError('Backend URL not configured. Go to extension options to set it up.');
       return;
     }
+
+    if (!backendUrl.startsWith('http')) backendUrl = 'https://' + backendUrl;
+    backendUrl = backendUrl.replace(/\/$/, '');
 
     const response = await fetch(`${backendUrl}/api/chat`, {
       method: 'POST',

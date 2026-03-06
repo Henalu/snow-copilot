@@ -10,7 +10,9 @@ async function load() {
 }
 
 document.getElementById('btnSave').addEventListener('click', async () => {
-  const backendUrl = document.getElementById('backendUrl').value.trim().replace(/\/$/, '');
+  let backendUrl = document.getElementById('backendUrl').value.trim();
+  if (backendUrl && !backendUrl.startsWith('http')) backendUrl = 'https://' + backendUrl;
+  backendUrl = backendUrl.replace(/\/$/, '');
   const autoShow = document.getElementById('autoShow').checked;
 
   await chrome.storage.sync.set({ backendUrl, autoShow });
