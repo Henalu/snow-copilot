@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SN Assistant",
-  "version": "0.1.0",
-  "description": "AI assistant for ServiceNow developers. Explain, comment, refactor and query your scripts.",
+  "version": "0.2.0",
+  "description": "AI assistant for ServiceNow developers. Explain, comment, refactor and query your scripts with multiple AI providers.",
 
   "permissions": [
     "storage",
@@ -11,11 +11,16 @@
   ],
 
   "host_permissions": [
-    "https://*.service-now.com/*"
+    "https://*.service-now.com/*",
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://openrouter.ai/*"
   ],
 
   "background": {
-    "service_worker": "service-worker.js"
+    "service_worker": "service-worker.js",
+    "type": "module"
   },
 
   "content_scripts": [

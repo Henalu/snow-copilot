@@ -92,7 +92,7 @@
   text-transform: uppercase !important;
 }
 
-#sn-assistant-sidebar .sna-toggle {
+#sn-assistant-sidebar .sna-close {
   background: transparent !important;
   border: 1px solid var(--sna-border) !important;
   color: var(--sna-text-muted) !important;
@@ -109,7 +109,7 @@
   transition: all 0.15s !important;
 }
 
-#sn-assistant-sidebar .sna-toggle:hover {
+#sn-assistant-sidebar .sna-close:hover {
   border-color: var(--sna-accent) !important;
   color: var(--sna-accent) !important;
 }
@@ -311,4 +311,68 @@
 #sn-assistant-sidebar .sna-copy-btn:hover {
   border-color: var(--sna-accent) !important;
   color: var(--sna-accent) !important;
+}
+
+/* ─── Trigger button ─────────────────────────────────────────────────────── */
+
+#sna-trigger-btn {
+  position: fixed !important;
+  right: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 40px !important;
+  height: 48px !important;
+  border-radius: 10px 0 0 10px !important;
+  background: #0f1117 !important;
+  border: 1px solid #2e3352 !important;
+  border-right: none !important;
+  color: #e8eaf6 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 99998 !important;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4) !important;
+  transition: background 0.2s, border-color 0.2s !important;
+  padding: 0 !important;
+  font-family: system-ui, sans-serif !important;
+}
+
+#sna-trigger-btn:hover {
+  background: #1a1d27 !important;
+  border-color: #6c8bff !important;
+}
+
+#sna-trigger-btn.active {
+  background: rgba(108, 139, 255, 0.15) !important;
+  border-color: #6c8bff !important;
+}
+
+.sna-trigger-icon {
+  font-size: 18px !important;
+  line-height: 1 !important;
+  position: relative !important;
+}
+
+/* Notification badge */
+.sna-trigger-badge {
+  position: absolute !important;
+  top: 8px !important;
+  right: 7px !important;
+  width: 9px !important;
+  height: 9px !important;
+  background: #6c8bff !important;
+  border-radius: 50% !important;
+  border: 2px solid #0f1117 !important;
+  animation: sna-badge-pulse 2s ease-in-out infinite !important;
+  display: block !important;
+}
+
+.sna-trigger-badge.dismissed {
+  display: none !important;
+}
+
+@keyframes sna-badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(108, 139, 255, 0.6); }
+  50%       { box-shadow: 0 0 0 5px rgba(108, 139, 255, 0); }
 }

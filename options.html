@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SN Assistant — Options</title>
+  <title>SN Assistant — Settings</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
   <style>
@@ -17,35 +17,18 @@
       display: flex;
       align-items: flex-start;
       justify-content: center;
-      padding: 48px 16px;
+      padding: 48px 16px 80px;
     }
 
-    .container {
-      width: 100%;
-      max-width: 520px;
-    }
+    .container { width: 100%; max-width: 700px; }
 
-    .header {
-      margin-bottom: 36px;
-    }
+    /* ── Header ── */
+    .header { margin-bottom: 36px; }
+    .header-logo { font-size: 24px; margin-bottom: 8px; }
+    .header h1 { font-size: 22px; font-weight: 600; color: #e8eaf6; }
+    .header p  { font-size: 13px; color: #7b82a8; margin-top: 4px; }
 
-    .header-logo {
-      font-size: 24px;
-      margin-bottom: 8px;
-    }
-
-    .header h1 {
-      font-size: 22px;
-      font-weight: 600;
-      color: #e8eaf6;
-    }
-
-    .header p {
-      font-size: 13px;
-      color: #7b82a8;
-      margin-top: 4px;
-    }
-
+    /* ── Cards ── */
     .card {
       background: #1a1d27;
       border: 1px solid #2e3352;
@@ -53,7 +36,6 @@
       padding: 24px;
       margin-bottom: 16px;
     }
-
     .card-title {
       font-size: 12px;
       font-weight: 600;
@@ -63,30 +45,24 @@
       margin-bottom: 20px;
     }
 
-    .field {
-      margin-bottom: 20px;
-    }
-
-    .field:last-child {
-      margin-bottom: 0;
-    }
+    /* ── Fields ── */
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
 
     label {
       display: block;
       font-size: 13px;
       font-weight: 500;
       color: #c5c8e0;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
-
-    .hint {
-      font-size: 11px;
-      color: #7b82a8;
-      margin-top: 5px;
-    }
+    .hint { font-size: 11px; color: #7b82a8; margin-top: 4px; }
 
     input[type="url"],
-    input[type="text"] {
+    input[type="text"],
+    input[type="password"],
+    select,
+    textarea.field-textarea {
       width: 100%;
       background: #0f1117;
       border: 1px solid #2e3352;
@@ -98,37 +74,38 @@
       outline: none;
       transition: border-color 0.15s;
     }
+    input:focus, select:focus, textarea:focus { border-color: #6c8bff; }
+    input::placeholder, textarea::placeholder { color: #7b82a8; }
 
-    input:focus {
-      border-color: #6c8bff;
-    }
+    select option { background: #1a1d27; }
 
-    input::placeholder {
+    textarea.field-textarea { resize: vertical; min-height: 72px; }
+
+    /* ── Input with inline button (show/hide password) ── */
+    .input-group { position: relative; display: flex; gap: 8px; }
+    .input-group input { flex: 1; }
+    .btn-icon {
+      background: #2e3352;
+      border: 1px solid #2e3352;
+      border-radius: 8px;
       color: #7b82a8;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 12px;
+      transition: background 0.15s;
+      flex-shrink: 0;
     }
+    .btn-icon:hover { background: #3a3f5c; }
 
+    /* ── Toggle switch ── */
     .toggle-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-
-    .toggle-info {
-      flex: 1;
-    }
-
-    .toggle-info strong {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: #c5c8e0;
-    }
-
-    .toggle-info span {
-      font-size: 11px;
-      color: #7b82a8;
-    }
-
+    .toggle-info { flex: 1; }
+    .toggle-info strong { display: block; font-size: 13px; font-weight: 500; color: #c5c8e0; }
+    .toggle-info span  { font-size: 11px; color: #7b82a8; }
     .toggle {
       position: relative;
       width: 40px;
@@ -136,14 +113,7 @@
       flex-shrink: 0;
       margin-left: 16px;
     }
-
-    .toggle input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-      position: absolute;
-    }
-
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
     .toggle-slider {
       position: absolute;
       inset: 0;
@@ -152,30 +122,167 @@
       cursor: pointer;
       transition: background 0.2s;
     }
-
     .toggle-slider::before {
       content: '';
       position: absolute;
-      height: 16px;
-      width: 16px;
-      left: 3px;
-      top: 3px;
+      height: 16px; width: 16px;
+      left: 3px; top: 3px;
       background: #7b82a8;
       border-radius: 50%;
       transition: transform 0.2s, background 0.2s;
     }
-
     .toggle input:checked + .toggle-slider {
-      background: rgba(108, 139, 255, 0.2);
+      background: rgba(108,139,255,0.2);
       border: 1px solid #6c8bff;
     }
-
     .toggle input:checked + .toggle-slider::before {
       transform: translateX(18px);
       background: #6c8bff;
     }
 
-    .btn-save {
+    /* ── Provider cards ── */
+    .provider-card {
+      border: 1px solid #2e3352;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .provider-card:last-child { margin-bottom: 0; }
+
+    .provider-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: #1e2133;
+      cursor: pointer;
+    }
+    .provider-header:hover { background: #232640; }
+
+    .provider-info { display: flex; align-items: center; gap: 10px; flex: 1; }
+    .provider-icon { font-size: 16px; }
+    .provider-name { font-size: 13px; font-weight: 500; color: #c5c8e0; }
+
+    .provider-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: 8px;
+    }
+    .badge-configured  { background: rgba(94,255,160,0.15); color: #5effa0; border: 1px solid rgba(94,255,160,0.3); }
+    .badge-missing     { background: rgba(255,180,50,0.15);  color: #ffb432; border: 1px solid rgba(255,180,50,0.3); }
+    .badge-disabled    { background: rgba(123,130,168,0.12); color: #7b82a8; border: 1px solid rgba(123,130,168,0.2); }
+    .badge-experimental{ background: rgba(180,100,255,0.15); color: #b464ff; border: 1px solid rgba(180,100,255,0.3); }
+
+    .provider-fields {
+      padding: 16px;
+      border-top: 1px solid #2e3352;
+      background: #141620;
+    }
+
+    /* ── Test connection ── */
+    .btn-test {
+      background: transparent;
+      border: 1px solid #2e3352;
+      border-radius: 8px;
+      color: #7b82a8;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      padding: 8px 16px;
+      transition: border-color 0.15s, color 0.15s;
+      margin-top: 4px;
+    }
+    .btn-test:hover { border-color: #6c8bff; color: #6c8bff; }
+    .btn-test:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .test-result {
+      font-size: 11px;
+      margin-top: 6px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: none;
+    }
+    .test-result.success { background: rgba(94,255,160,0.1); color: #5effa0; display: block; }
+    .test-result.error   { background: rgba(255,100,100,0.1); color: #ff7070; display: block; }
+
+    /* ── Routing table ── */
+    .routing-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .routing-table th {
+      text-align: left;
+      padding: 8px 10px;
+      color: #7b82a8;
+      font-weight: 500;
+      border-bottom: 1px solid #2e3352;
+      white-space: nowrap;
+    }
+    .routing-table td {
+      padding: 10px;
+      border-bottom: 1px solid #1e2133;
+      vertical-align: middle;
+    }
+    .routing-table tr:last-child td { border-bottom: none; }
+
+    .action-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      color: #c5c8e0;
+      white-space: nowrap;
+    }
+
+    .recommended-text { color: #7b82a8; font-size: 11px; }
+
+    .routing-select {
+      background: #0f1117;
+      border: 1px solid #2e3352;
+      border-radius: 6px;
+      color: #e8eaf6;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 6px 8px;
+      width: 100%;
+    }
+    .routing-select:focus { border-color: #6c8bff; outline: none; }
+
+    .badge-auto   { background: rgba(108,139,255,0.15); color: #6c8bff; border: 1px solid rgba(108,139,255,0.3); }
+    .badge-custom { background: rgba(255,180,50,0.15);  color: #ffb432; border: 1px solid rgba(255,180,50,0.3); }
+
+    .btn-reset {
+      background: transparent;
+      border: 1px solid #2e3352;
+      border-radius: 6px;
+      color: #7b82a8;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      padding: 4px 10px;
+      white-space: nowrap;
+    }
+    .btn-reset:hover { border-color: #6c8bff; color: #6c8bff; }
+
+    /* ── Recommendations card ── */
+    .rec-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #2e3352;
+    }
+    .rec-row:last-child { border-bottom: none; }
+    .rec-action { font-size: 13px; font-weight: 500; color: #c5c8e0; min-width: 80px; }
+    .rec-detail { font-size: 11px; color: #7b82a8; flex: 1; margin: 0 16px; }
+    .rec-detail strong { color: #c5c8e0; }
+
+    /* ── Buttons ── */
+    .btn-primary {
       background: #6c8bff;
       border: none;
       border-radius: 8px;
@@ -186,14 +293,31 @@
       font-weight: 600;
       padding: 10px 24px;
       transition: background 0.15s;
-      width: 100%;
-      margin-top: 8px;
+    }
+    .btn-primary:hover { background: #8aa0ff; }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #2e3352;
+      border-radius: 8px;
+      color: #c5c8e0;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 20px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-secondary:hover { border-color: #6c8bff; color: #6c8bff; }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
     }
 
-    .btn-save:hover {
-      background: #8aa0ff;
-    }
-
+    /* ── Status ── */
     .status {
       font-size: 12px;
       text-align: center;
@@ -203,9 +327,26 @@
       opacity: 0;
       transition: opacity 0.3s;
     }
+    .status.show { opacity: 1; }
+    .status.error { color: #ff7070; }
 
-    .status.show {
-      opacity: 1;
+    /* ── Divider ── */
+    .divider { border: none; border-top: 1px solid #2e3352; margin: 16px 0; }
+
+    /* ── No providers warning ── */
+    .no-providers-msg {
+      font-size: 12px;
+      color: #7b82a8;
+      text-align: center;
+      padding: 16px;
+    }
+
+    /* ── Section desc ── */
+    .section-desc {
+      font-size: 12px;
+      color: #7b82a8;
+      margin-bottom: 16px;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -217,19 +358,7 @@
       <p>Configure your AI assistant for ServiceNow</p>
     </div>
 
-    <div class="card">
-      <div class="card-title">Backend</div>
-      <div class="field">
-        <label for="backendUrl">Vercel Function URL</label>
-        <input
-          type="url"
-          id="backendUrl"
-          placeholder="https://your-project.vercel.app"
-        />
-        <p class="hint">Your deployed Vercel project URL (without /api/chat)</p>
-      </div>
-    </div>
-
+    <!-- ── Behavior ──────────────────────────────────────────────────────── -->
     <div class="card">
       <div class="card-title">Behavior</div>
       <div class="field">
@@ -246,10 +375,293 @@
       </div>
     </div>
 
-    <button class="btn-save" id="btnSave">Save settings</button>
+    <!-- ── AI Providers ───────────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-title">AI Providers</div>
+      <p class="section-desc">Enable one or more providers. Your API keys are stored locally in your browser profile.</p>
+
+      <!-- Anthropic Claude -->
+      <div class="provider-card" id="card-anthropic">
+        <div class="provider-header" data-toggle="anthropic">
+          <div class="provider-info">
+            <span class="provider-icon">🟣</span>
+            <span class="provider-name">Anthropic Claude</span>
+            <span class="provider-badge badge-disabled" id="badge-anthropic">Disabled</span>
+          </div>
+          <label class="toggle" onclick="event.stopPropagation()">
+            <input type="checkbox" id="enabled-anthropic" class="provider-enabled" data-provider="anthropic">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="provider-fields" id="fields-anthropic" style="display:none">
+          <div class="field">
+            <label>API Key</label>
+            <div class="input-group">
+              <input type="password" id="anthropic-apiKey" placeholder="sk-ant-api03-..." autocomplete="off">
+              <button class="btn-icon" data-showhide="anthropic-apiKey" title="Show/hide">👁</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Model</label>
+            <select id="anthropic-model">
+              <option value="claude-opus-4-6">Claude Opus 4.6 — Premium</option>
+              <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6 — Recommended</option>
+              <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — Fast & cheap</option>
+            </select>
+          </div>
+          <button class="btn-test" data-test="anthropic">Test connection</button>
+          <div class="test-result" id="test-anthropic"></div>
+        </div>
+      </div>
+
+      <!-- OpenAI -->
+      <div class="provider-card" id="card-openai">
+        <div class="provider-header" data-toggle="openai">
+          <div class="provider-info">
+            <span class="provider-icon">🟢</span>
+            <span class="provider-name">OpenAI</span>
+            <span class="provider-badge badge-disabled" id="badge-openai">Disabled</span>
+          </div>
+          <label class="toggle" onclick="event.stopPropagation()">
+            <input type="checkbox" id="enabled-openai" class="provider-enabled" data-provider="openai">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="provider-fields" id="fields-openai" style="display:none">
+          <div class="field">
+            <label>API Key</label>
+            <div class="input-group">
+              <input type="password" id="openai-apiKey" placeholder="sk-..." autocomplete="off">
+              <button class="btn-icon" data-showhide="openai-apiKey" title="Show/hide">👁</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Model</label>
+            <select id="openai-model">
+              <option value="gpt-4.1">GPT-4.1 — Premium</option>
+              <option value="gpt-4o">GPT-4o — High quality</option>
+              <option value="gpt-4o-mini" selected>GPT-4o Mini — Recommended</option>
+              <option value="gpt-4.1-mini">GPT-4.1 Mini — Fast & cheap</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Custom Base URL <span style="color:#7b82a8;font-weight:400">(optional)</span></label>
+            <input type="url" id="openai-baseUrl" placeholder="https://api.openai.com/v1">
+            <p class="hint">Leave blank to use the official OpenAI endpoint. Useful for Azure OpenAI or compatible APIs.</p>
+          </div>
+          <button class="btn-test" data-test="openai">Test connection</button>
+          <div class="test-result" id="test-openai"></div>
+        </div>
+      </div>
+
+      <!-- Google Gemini -->
+      <div class="provider-card" id="card-gemini">
+        <div class="provider-header" data-toggle="gemini">
+          <div class="provider-info">
+            <span class="provider-icon">🔵</span>
+            <span class="provider-name">Google Gemini</span>
+            <span class="provider-badge badge-disabled" id="badge-gemini">Disabled</span>
+          </div>
+          <label class="toggle" onclick="event.stopPropagation()">
+            <input type="checkbox" id="enabled-gemini" class="provider-enabled" data-provider="gemini">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="provider-fields" id="fields-gemini" style="display:none">
+          <div class="field">
+            <label>API Key</label>
+            <div class="input-group">
+              <input type="password" id="gemini-apiKey" placeholder="AIza..." autocomplete="off">
+              <button class="btn-icon" data-showhide="gemini-apiKey" title="Show/hide">👁</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Model</label>
+            <select id="gemini-model">
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro — Premium</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash — Balanced</option>
+              <option value="gemini-2.0-flash" selected>Gemini 2.0 Flash — Recommended</option>
+            </select>
+          </div>
+          <button class="btn-test" data-test="gemini">Test connection</button>
+          <div class="test-result" id="test-gemini"></div>
+        </div>
+      </div>
+
+      <!-- OpenRouter -->
+      <div class="provider-card" id="card-openrouter">
+        <div class="provider-header" data-toggle="openrouter">
+          <div class="provider-info">
+            <span class="provider-icon">🔀</span>
+            <span class="provider-name">OpenRouter</span>
+            <span class="provider-badge badge-disabled" id="badge-openrouter">Disabled</span>
+          </div>
+          <label class="toggle" onclick="event.stopPropagation()">
+            <input type="checkbox" id="enabled-openrouter" class="provider-enabled" data-provider="openrouter">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="provider-fields" id="fields-openrouter" style="display:none">
+          <div class="field">
+            <label>API Key</label>
+            <div class="input-group">
+              <input type="password" id="openrouter-apiKey" placeholder="sk-or-v1-..." autocomplete="off">
+              <button class="btn-icon" data-showhide="openrouter-apiKey" title="Show/hide">👁</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Model</label>
+            <input type="text" id="openrouter-model" placeholder="e.g. anthropic/claude-sonnet-4-6">
+            <p class="hint">Full model ID as listed on openrouter.ai/models</p>
+          </div>
+          <div class="field">
+            <label>App name <span style="color:#7b82a8;font-weight:400">(optional)</span></label>
+            <input type="text" id="openrouter-siteName" placeholder="SN Assistant">
+            <p class="hint">Sent as X-Title header. Helps OpenRouter attribute usage.</p>
+          </div>
+          <button class="btn-test" data-test="openrouter">Test connection</button>
+          <div class="test-result" id="test-openrouter"></div>
+        </div>
+      </div>
+
+      <!-- Custom Endpoint (replaces old Vercel URL field) -->
+      <div class="provider-card" id="card-customEndpoint">
+        <div class="provider-header" data-toggle="customEndpoint">
+          <div class="provider-info">
+            <span class="provider-icon">🔗</span>
+            <span class="provider-name">Custom Endpoint</span>
+            <span class="provider-badge badge-disabled" id="badge-customEndpoint">Disabled</span>
+          </div>
+          <label class="toggle" onclick="event.stopPropagation()">
+            <input type="checkbox" id="enabled-customEndpoint" class="provider-enabled" data-provider="customEndpoint">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="provider-fields" id="fields-customEndpoint" style="display:none">
+          <div class="field">
+            <label>Endpoint URL</label>
+            <input type="url" id="customEndpoint-url" placeholder="https://your-project.vercel.app">
+            <p class="hint">Your backend proxy URL (e.g. Vercel deployment). Must expose POST /api/chat.</p>
+          </div>
+          <div class="field">
+            <label>API Key / Bearer token <span style="color:#7b82a8;font-weight:400">(optional)</span></label>
+            <div class="input-group">
+              <input type="password" id="customEndpoint-apiKey" placeholder="Bearer token or API key" autocomplete="off">
+              <button class="btn-icon" data-showhide="customEndpoint-apiKey" title="Show/hide">👁</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>Model override <span style="color:#7b82a8;font-weight:400">(optional)</span></label>
+            <input type="text" id="customEndpoint-model" placeholder="e.g. claude-sonnet-4-6">
+            <p class="hint">If your backend supports model selection, set it here.</p>
+          </div>
+          <div class="field">
+            <label>Custom headers JSON <span style="color:#7b82a8;font-weight:400">(optional)</span></label>
+            <textarea class="field-textarea" id="customEndpoint-headersJson" placeholder='{"X-My-Header": "value"}'></textarea>
+          </div>
+          <button class="btn-test" data-test="customEndpoint">Test connection</button>
+          <div class="test-result" id="test-customEndpoint"></div>
+        </div>
+      </div>
+
+      <!-- Local LLM -->
+      <div class="provider-card" id="card-localLlm">
+        <div class="provider-header" data-toggle="localLlm">
+          <div class="provider-info">
+            <span class="provider-icon">💻</span>
+            <span class="provider-name">Local LLM</span>
+            <span class="provider-badge badge-experimental" id="badge-localLlm">Experimental</span>
+          </div>
+          <label class="toggle" onclick="event.stopPropagation()">
+            <input type="checkbox" id="enabled-localLlm" class="provider-enabled" data-provider="localLlm">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="provider-fields" id="fields-localLlm" style="display:none">
+          <div class="field">
+            <label>Base URL</label>
+            <input type="url" id="localLlm-baseUrl" placeholder="http://localhost:11434">
+            <p class="hint">Ollama-compatible API base URL. Default: http://localhost:11434</p>
+          </div>
+          <div class="field">
+            <label>Model</label>
+            <input type="text" id="localLlm-model" placeholder="e.g. llama3.2, mistral, codellama">
+          </div>
+          <button class="btn-test" data-test="localLlm">Test connection</button>
+          <div class="test-result" id="test-localLlm"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Routing ─────────────────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-title">Routing</div>
+      <p class="section-desc">Choose which provider handles AI requests. When action routing is off, all actions use the default provider.</p>
+
+      <div class="field">
+        <label>Default provider</label>
+        <select id="defaultProvider">
+          <option value="">— Select a configured provider —</option>
+        </select>
+        <p class="hint" id="default-provider-hint"></p>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Action-based routing</strong>
+            <span>Assign a different provider and model to each action</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="actionRoutingEnabled">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div id="action-routing-section" style="display:none; margin-top: 16px;">
+        <div id="action-routing-table-container">
+          <p class="no-providers-msg">Enable and configure at least one provider to set up action routing.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Smart Defaults ─────────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-title">Smart Defaults</div>
+      <p class="section-desc">
+        Based on your enabled providers, the recommendation engine suggests the best provider + model per action.
+        Actions marked as <strong style="color:#6c8bff">Auto</strong> follow recommendations automatically.
+        Actions marked as <strong style="color:#ffb432">Custom</strong> use your manual selection.
+      </p>
+
+      <div id="recommendations-container">
+        <p class="no-providers-msg">Enable and configure providers to see recommendations.</p>
+      </div>
+
+      <div class="btn-row" style="margin-top: 16px;">
+        <button class="btn-secondary" id="btnApplyRecommended">Apply recommended setup</button>
+        <button class="btn-secondary" id="btnRecalculate">Recalculate</button>
+      </div>
+    </div>
+
+    <!-- ── Data management ────────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-title">Data</div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btnExport">Export settings</button>
+        <button class="btn-secondary" id="btnImport">Import settings</button>
+      </div>
+      <input type="file" id="importFile" accept=".json" style="display:none">
+      <p class="hint" style="margin-top:8px">Export creates a JSON backup of all settings (including API keys). Keep it safe.</p>
+    </div>
+
+    <button class="btn-primary" id="btnSave" style="width:100%">Save settings</button>
     <div class="status" id="status">✓ Settings saved</div>
   </div>
 
-  <script src="options.js"></script>
+  <script type="module" src="options.js"></script>
 </body>
 </html>

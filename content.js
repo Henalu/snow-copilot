@@ -1,44 +1,40 @@
 // SN Assistant — content.js
-// Detecta editores CodeMirror en ServiceNow e inyecta el panel lateral
+// Detects Monaco editors in ServiceNow and injects the assistant sidebar panel.
 
 const SN_ASSISTANT_ID = 'sn-assistant-sidebar';
+const SN_TRIGGER_ID   = 'sna-trigger-btn';
 
-// ─── Detección de contexto ────────────────────────────────────────────────────
+// ─── Page context detection ───────────────────────────────────────────────────
 
 function getPageContext() {
   const url = window.location.href;
-  const hostname = window.location.hostname; // empresa.service-now.com
+  const hostname = window.location.hostname;
 
-  // Detectar tabla desde la URL
-  // Ejemplos: /incident.do, /sys_script_fix.do, /sys_script_include.do
   const tableMatch = url.match(/\/([a-z_]+)\.do/);
   const table = tableMatch ? tableMatch[1] : 'unknown';
 
-  // Detectar sys_id si está en la URL
   const sysIdMatch = url.match(/sys_id=([a-f0-9]{32})/);
   const sysId = sysIdMatch ? sysIdMatch[1] : null;
 
-  // Tipo de script
   let scriptType = 'unknown';
-  if (table === 'sys_script') scriptType = 'Business Rule';
+  if (table === 'sys_script')         scriptType = 'Business Rule';
   else if (table === 'sys_script_include') scriptType = 'Script Include';
-  else if (table === 'sys_script_fix') scriptType = 'Fix Script';
-  else if (table === 'sys_ui_action') scriptType = 'UI Action';
-  else if (table === 'sys_ui_script') scriptType = 'UI Script';
+  else if (table === 'sys_script_fix')     scriptType = 'Fix Script';
+  else if (table === 'sys_ui_action')      scriptType = 'UI Action';
+  else if (table === 'sys_ui_script')      scriptType = 'UI Script';
   else if (url.includes('$background_script')) scriptType = 'Background Script';
 
   return { hostname, table, sysId, scriptType, url };
 }
 
-// ─── Extracción de código ─────────────────────────────────────────────────────
+// ─── Code extraction ──────────────────────────────────────────────────────────
 
 function extractCode() {
-  // Método 1: Textarea oculto con selector exacto (más fiable en Monaco/ServiceNow)
+  // Method 1: Hidden textarea (most reliable for Monaco/ServiceNow)
   const exactTextarea = document.querySelector('textarea[id$=".script"][name$=".script"]');
   if (exactTextarea && exactTextarea.value.trim().length > 0) return exactTextarea.value;
 
-  // Método 2: Variable global Monaco dinámica
-  // ServiceNow expone el editor como window['{tabla}_{campo}_editor'], ej: sys_script_script_editor
+  // Method 2: Global Monaco editor instances exposed by ServiceNow
   for (const key of Object.keys(window)) {
     if (key.endsWith('_editor')) {
       const editor = window[key];
@@ -56,7 +52,7 @@ function extractCode() {
     }
   }
 
-  // Método 3: Monaco via API del DOM (último recurso)
+  // Method 3: Monaco global API
   if (window.monaco && window.monaco.editor) {
     const models = window.monaco.editor.getModels();
     for (const model of models) {
@@ -68,7 +64,7 @@ function extractCode() {
   return null;
 }
 
-// ─── Panel lateral ────────────────────────────────────────────────────────────
+// ─── Sidebar panel ────────────────────────────────────────────────────────────
 
 function createSidebar() {
   if (document.getElementById(SN_ASSISTANT_ID)) return;
@@ -83,7 +79,7 @@ function createSidebar() {
       </div>
       <div class="sna-header-right">
         <span class="sna-context" id="sna-context-label"></span>
-        <button class="sna-toggle" id="sna-toggle" title="Minimizar">−</button>
+        <button class="sna-close" id="sna-close" title="Cerrar">×</button>
       </div>
     </div>
 
@@ -129,7 +125,7 @@ function createSidebar() {
       </div>
 
       <div class="sna-footer">
-        <span class="sna-model">Claude 3.5 Sonnet</span>
+        <span class="sna-model" id="sna-model-label">SN Assistant</span>
         <button class="sna-copy-btn" id="sna-copy" style="display:none;" title="Copy response">Copy</button>
       </div>
     </div>
@@ -148,25 +144,19 @@ function updateContextLabel() {
   }
 }
 
-// ─── Eventos del panel ────────────────────────────────────────────────────────
+// ─── Sidebar events ───────────────────────────────────────────────────────────
 
 function initSidebarEvents(sidebar) {
-  // Toggle minimizar/expandir
-  const toggleBtn = document.getElementById('sna-toggle');
-  const body = document.getElementById('sna-body');
-  toggleBtn.addEventListener('click', () => {
-    const isCollapsed = body.style.display === 'none';
-    body.style.display = isCollapsed ? 'flex' : 'none';
-    toggleBtn.textContent = isCollapsed ? '−' : '+';
+  document.getElementById('sna-close').addEventListener('click', () => {
+    sidebar.remove();
+    document.getElementById(SN_TRIGGER_ID)?.classList.remove('active');
   });
 
-  // Botones de acción
   const actionBtns = sidebar.querySelectorAll('.sna-action-btn');
   actionBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
 
-      // Resaltar botón activo
       actionBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
@@ -179,13 +169,11 @@ function initSidebarEvents(sidebar) {
     });
   });
 
-  // Botón send para "Ask"
   document.getElementById('sna-send-question').addEventListener('click', () => {
     const question = document.getElementById('sna-question-input').value.trim();
     if (question) runAction('ask', question);
   });
 
-  // Enter en textarea también envía
   document.getElementById('sna-question-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       const question = e.target.value.trim();
@@ -193,7 +181,6 @@ function initSidebarEvents(sidebar) {
     }
   });
 
-  // Copiar respuesta
   document.getElementById('sna-copy').addEventListener('click', () => {
     const responseEl = document.getElementById('sna-response');
     navigator.clipboard.writeText(responseEl.innerText);
@@ -203,9 +190,9 @@ function initSidebarEvents(sidebar) {
   });
 }
 
-// ─── Llamada al backend ───────────────────────────────────────────────────────
+// ─── Action execution ─────────────────────────────────────────────────────────
 
-async function runAction(action, question = '') {
+function runAction(action, question = '') {
   const code = extractCode();
 
   if (!code) {
@@ -214,74 +201,31 @@ async function runAction(action, question = '') {
   }
 
   const context = getPageContext();
-
   showLoading();
 
-  try {
-    // Leer la URL del backend desde storage
-    let { backendUrl } = await chrome.storage.sync.get({ backendUrl: '' });
+  const port = chrome.runtime.connect({ name: 'ai-stream' });
+  let fullText = '';
 
-    if (!backendUrl) {
-      showError('Backend URL not configured. Go to extension options to set it up.');
-      return;
+  port.onMessage.addListener((msg) => {
+    if (msg.type === 'label') {
+      const el = document.getElementById('sna-model-label');
+      if (el) el.textContent = msg.label;
+    } else if (msg.type === 'chunk') {
+      if (fullText === '') showResponse('');
+      fullText += msg.chunk;
+      updateResponse(fullText);
+    } else if (msg.type === 'done') {
+      port.disconnect();
+    } else if (msg.type === 'error') {
+      showError(msg.message);
+      port.disconnect();
     }
+  });
 
-    if (!backendUrl.startsWith('http')) backendUrl = 'https://' + backendUrl;
-    backendUrl = backendUrl.replace(/\/$/, '');
-
-    const response = await fetch(`${backendUrl}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action,
-        code,
-        question,
-        context: {
-          scriptType: context.scriptType,
-          table: context.table,
-          hostname: context.hostname
-        }
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Backend error: ${response.status}`);
-    }
-
-    // Streaming response
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-
-    showResponse('');
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value, { stream: true });
-      // Parsear SSE chunks
-      const lines = chunk.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(data);
-            const text = parsed.delta?.text || '';
-            fullText += text;
-            updateResponse(fullText);
-          } catch {}
-        }
-      }
-    }
-
-  } catch (err) {
-    showError(`Error: ${err.message}`);
-  }
+  port.postMessage({ action, code, question, context });
 }
 
-// ─── UI helpers ──────────────────────────────────────────────────────────────
+// ─── UI helpers ───────────────────────────────────────────────────────────────
 
 function showLoading() {
   document.getElementById('sna-placeholder').style.display = 'none';
@@ -299,7 +243,6 @@ function showResponse(text) {
 
 function updateResponse(text) {
   document.getElementById('sna-response').textContent = text;
-  // Auto-scroll al final
   const area = document.getElementById('sna-response-area');
   area.scrollTop = area.scrollHeight;
 }
@@ -313,13 +256,41 @@ function showError(msg) {
   document.getElementById('sna-copy').style.display = 'none';
 }
 
-// ─── Detección automática ─────────────────────────────────────────────────────
+// ─── Trigger button ───────────────────────────────────────────────────────────
+
+function createTriggerButton() {
+  if (document.getElementById(SN_TRIGGER_ID)) return;
+
+  const btn = document.createElement('button');
+  btn.id = SN_TRIGGER_ID;
+  btn.title = 'SN Assistant — script detected';
+  btn.innerHTML = `<span class="sna-trigger-icon">⚡</span><span class="sna-trigger-badge" id="sna-trigger-badge"></span>`;
+  btn.addEventListener('click', toggleSidebar);
+  document.body.appendChild(btn);
+}
+
+function toggleSidebar() {
+  const existing = document.getElementById(SN_ASSISTANT_ID);
+  if (existing) {
+    existing.remove();
+    document.getElementById(SN_TRIGGER_ID)?.classList.remove('active');
+  } else {
+    createSidebar();
+    dismissBadge();
+    document.getElementById(SN_TRIGGER_ID)?.classList.add('active');
+  }
+}
+
+function dismissBadge() {
+  const badge = document.getElementById('sna-trigger-badge');
+  if (badge) badge.classList.add('dismissed');
+}
+
+// ─── Auto-detection ───────────────────────────────────────────────────────────
 
 function hasCodeEditor() {
-  // Mismo selector exacto que extractCode() — textarea oculto de Monaco
   const exactTextarea = document.querySelector('textarea[id$=".script"][name$=".script"]');
   if (exactTextarea && exactTextarea.value.trim().length > 0) return true;
-  // Fallback: cualquier variable global _editor con getValue
   for (const key of Object.keys(window)) {
     if (key.endsWith('_editor') && typeof window[key]?.getValue === 'function') return true;
   }
@@ -327,37 +298,24 @@ function hasCodeEditor() {
 }
 
 async function init() {
-  // Solo actuar si estamos dentro del iframe gsft_main
+  // Only run inside the gsft_main iframe where the Monaco editor lives
   if (window.name !== 'gsft_main' && window !== window.top) return;
-  if (window === window.top && !document.getElementById('gsft_main')) {
-    // Estamos en el doc principal sin iframe visible — esperar
-    return;
-  }
+  if (window === window.top && !document.getElementById('gsft_main')) return;
 
-  const { autoShow } = await chrome.storage.sync.get({ autoShow: true });
-
-  if (autoShow) {
-    // Esperar a que el editor cargue (ServiceNow puede tardar)
-    let attempts = 0;
-    const interval = setInterval(() => {
-      attempts++;
-      if (hasCodeEditor()) {
-        clearInterval(interval);
-        createSidebar();
-      }
-      if (attempts > 20) clearInterval(interval); // máx 10s
-    }, 500);
-  }
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    if (hasCodeEditor()) {
+      clearInterval(interval);
+      createTriggerButton();
+    }
+    if (attempts > 20) clearInterval(interval); // max 10s
+  }, 500);
 }
 
-// Escuchar mensajes del service worker (para activación manual futura)
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'TOGGLE_SIDEBAR') {
-    if (document.getElementById(SN_ASSISTANT_ID)) {
-      document.getElementById(SN_ASSISTANT_ID).remove();
-    } else {
-      createSidebar();
-    }
+    toggleSidebar();
   }
 });
 
