@@ -348,6 +348,30 @@
       margin-bottom: 16px;
       line-height: 1.5;
     }
+
+    /* ── Help & Feedback links ── */
+    .feedback-links { display: flex; flex-direction: column; gap: 8px; }
+    .btn-feedback-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid #2e3352;
+      border-radius: 8px;
+      color: #c5c8e0;
+      text-decoration: none;
+      font-size: 13px;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .btn-feedback-link:hover {
+      border-color: #6c8bff;
+      color: #6c8bff;
+      background: rgba(108,139,255,0.05);
+    }
+    .btn-feedback-link-icon { font-size: 18px; flex-shrink: 0; }
+    .btn-feedback-link-text strong { display: block; font-weight: 500; margin-bottom: 2px; }
+    .btn-feedback-link-text span { font-size: 11px; color: #7b82a8; }
+    .btn-feedback-link:hover .btn-feedback-link-text span { color: #6c8bff; opacity: 0.7; }
   </style>
 </head>
 <body>
@@ -656,6 +680,34 @@
       </div>
       <input type="file" id="importFile" accept=".json" style="display:none">
       <p class="hint" style="margin-top:8px">Export creates a JSON backup of all settings (including API keys). Keep it safe.</p>
+    </div>
+
+    <!-- ── Help & Feedback ───────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="card-title">Help & Feedback</div>
+      <div class="feedback-links">
+        <a class="btn-feedback-link" href="https://github.com/Henalu/snow-copilot/wiki" target="_blank" rel="noopener">
+          <span class="btn-feedback-link-icon">📚</span>
+          <span class="btn-feedback-link-text">
+            <strong>Documentation & FAQ</strong>
+            <span>Installation, provider setup, troubleshooting</span>
+          </span>
+        </a>
+        <a class="btn-feedback-link" href="https://github.com/Henalu/snow-copilot/issues/new?template=bug_report.yml" target="_blank" rel="noopener">
+          <span class="btn-feedback-link-icon">🐛</span>
+          <span class="btn-feedback-link-text">
+            <strong>Report a bug</strong>
+            <span>Something isn't working? Let us know</span>
+          </span>
+        </a>
+        <a class="btn-feedback-link" href="https://github.com/Henalu/snow-copilot/issues/new?template=feature_request.yml" target="_blank" rel="noopener">
+          <span class="btn-feedback-link-icon">💡</span>
+          <span class="btn-feedback-link-text">
+            <strong>Request a feature</strong>
+            <span>Missing something? Suggest it here</span>
+          </span>
+        </a>
+      </div>
     </div>
 
     <button class="btn-primary" id="btnSave" style="width:100%">Save settings</button>

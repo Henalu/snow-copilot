@@ -1,0 +1,85 @@
+SN Assistant — Proprietary Software License
+
+Copyright (c) 2025 CoreX. All rights reserved.
+
+This software and its source code are proprietary and confidential.
+The source code is made available for transparency and community feedback only.
+
+────────────────────────────────────────────────────────────────────────────────
+1. PERMITTED USE
+────────────────────────────────────────────────────────────────────────────────
+
+You are permitted to:
+
+  a) Install and use this software for personal or internal organizational
+     purposes at no charge.
+
+  b) Submit bug reports, feature requests, and pull requests via the official
+     GitHub repository at https://github.com/Henalu/snow-copilot.
+
+  c) Fork this repository solely for the purpose of contributing back to the
+     original project via pull requests.
+
+────────────────────────────────────────────────────────────────────────────────
+2. RESTRICTIONS
+────────────────────────────────────────────────────────────────────────────────
+
+Without prior written permission from the copyright holder, you may NOT:
+
+  a) Redistribute, sell, rent, lease, or sublicense this software or any
+     derivative works, in source or binary form, to any third party.
+
+  b) Publish or distribute modified or unmodified copies of this software
+     under any name or branding.
+
+  c) Use this software, or any substantial portion of its source code, as the
+     basis for a competing product, service, or browser extension.
+
+  d) Use this software for commercial purposes — including as part of a paid
+     service, SaaS offering, or commercial consulting deliverable — without a
+     separate written commercial license agreement.
+
+  e) Remove, alter, or obscure any copyright notice, license text, trademark,
+     or other proprietary marking contained in this software.
+
+────────────────────────────────────────────────────────────────────────────────
+3. CONTRIBUTIONS
+────────────────────────────────────────────────────────────────────────────────
+
+By submitting a contribution (pull request, patch, issue, or otherwise) to
+this repository, you agree that:
+
+  a) You have the right to submit the contribution.
+
+  b) You grant the copyright holder a perpetual, worldwide, non-exclusive,
+     royalty-free, irrevocable license to use, copy, modify, merge, publish,
+     and distribute your contribution as part of this software, under any
+     license the copyright holder chooses.
+
+  c) The copyright holder is not obligated to include any contribution.
+
+────────────────────────────────────────────────────────────────────────────────
+4. NO WARRANTY
+────────────────────────────────────────────────────────────────────────────────
+
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING
+FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+
+────────────────────────────────────────────────────────────────────────────────
+5. CONTACT
+────────────────────────────────────────────────────────────────────────────────
+
+For commercial licensing, partnership inquiries, or any other questions
+regarding permitted use, contact:
+
+  [tu-email@corex.com]
+
+────────────────────────────────────────────────────────────────────────────────
+
+Any use not expressly permitted by this license is strictly prohibited.

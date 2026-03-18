@@ -1,0 +1,96 @@
+name: Bug Report
+description: Something isn't working as expected
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! The more detail you provide, the faster we can fix it.
+
+  - type: dropdown
+    id: sn-experience
+    attributes:
+      label: ServiceNow Experience
+      description: Which UI experience are you using?
+      options:
+        - Polaris / Next Experience
+        - Classic UI
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: record-type
+    attributes:
+      label: Record Type
+      description: Which script type were you working with when the bug occurred?
+      options:
+        - Business Rule
+        - Script Include
+        - Client Script
+        - Fix Script
+        - UI Action
+        - Scripted REST Resource
+        - Scheduled Script
+        - UI Script
+        - Transform Script
+        - Background Script
+        - Other / Not applicable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: AI Provider
+      description: Which provider were you using?
+      options:
+        - Anthropic Claude
+        - OpenAI
+        - Google Gemini
+        - OpenRouter
+        - Custom Endpoint
+        - Local LLM (Ollama / LM Studio)
+        - Not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug. What did you expect vs. what actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a Business Rule in ServiceNow
+        2. Click the ⚡ trigger button
+        3. Select "Explain"
+        4. ...
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors (if any)
+      description: |
+        Open DevTools (F12) → Console tab → paste any errors here.
+        For service worker errors: go to chrome://extensions/ → SN Assistant → "Service Worker" → Inspect → Console.
+      render: text
+
+  - type: input
+    id: sn-version
+    attributes:
+      label: ServiceNow release (if known)
+      placeholder: "e.g. Xanadu, Yokohama"
+
+  - type: input
+    id: chrome-version
+    attributes:
+      label: Chrome version
+      placeholder: "e.g. 124.0.6367"
