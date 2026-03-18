@@ -89,6 +89,49 @@ ${code}
 Answer concisely and directly. Include code examples if helpful.`
       };
 
+    case 'document':
+      return {
+        system: SYSTEM_BASE,
+        user: `Generate complete technical documentation for this ${scriptType}.
+
+Use the following structure exactly (markdown headings):
+
+# [Descriptive title for the script]
+
+## Overview
+What this script does and why it exists (2-4 sentences, business context).
+
+## Trigger / Entry Point
+When and how this script executes (e.g. Business Rule timing, Client Script event, REST endpoint, scheduler frequency).
+
+## Inputs & Parameters
+Table or list of inputs: variables read from current record, parameters, system properties, etc.
+
+## Logic Description
+Numbered step-by-step walkthrough of what the script does, written so both developers and functional consultants can understand it.
+
+## ServiceNow APIs Used
+Brief list of Glide APIs, platform objects, or GlideAjax calls (e.g. GlideRecord, gs.getProperty, GlideAggregate).
+
+## Dependencies
+Script Includes, tables queried or updated, system properties, other records this script relies on.
+
+## Side Effects & Outputs
+What records, fields, or external systems are created/modified/notified as a result.
+
+## Notes & Recommendations
+Known limitations, performance considerations, security notes, or suggested improvements.
+
+---
+
+Script (${scriptType}):
+\`\`\`javascript
+${code}
+\`\`\`
+
+Write in English. Be thorough but concise. Use markdown formatting throughout.`
+      };
+
     default:
       throw new Error(`Unknown action: ${action}`);
   }

@@ -19,8 +19,8 @@ const PROVIDER_ADAPTERS = {
   localLlm:       localLlmProvider
 };
 
-const ACTION_ICONS = { explain: '🔍', comment: '💬', refactor: '✨', ask: '❓' };
-const ACTION_LABELS = { explain: 'Explain', comment: 'Comment', refactor: 'Refactor', ask: 'Ask' };
+const ACTION_ICONS  = { explain: '🔍', comment: '💬', refactor: '✨', ask: '❓', document: '📄' };
+const ACTION_LABELS = { explain: 'Explain', comment: 'Comment', refactor: 'Refactor', ask: 'Ask', document: 'Document' };
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -495,6 +495,12 @@ function validate(s) {
 // ─── Static event bindings ────────────────────────────────────────────────────
 
 function bindStaticEvents() {
+  // Prevent toggle label clicks from bubbling up to the provider header (which collapses the card).
+  // Replaces the removed inline onclick="event.stopPropagation()" — MV3 CSP forbids inline handlers.
+  document.querySelectorAll('.sna-provider-toggle').forEach(label => {
+    label.addEventListener('click', e => e.stopPropagation());
+  });
+
   // Provider enable toggles — show/hide fields, update badge, re-render routing
   document.querySelectorAll('.provider-enabled').forEach(toggle => {
     toggle.addEventListener('change', () => {

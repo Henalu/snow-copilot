@@ -1,7 +1,7 @@
 // recommendation/engine.js — Smart defaults / recommended routing engine
 
 import { MODEL_CATALOG, ACTION_PRIORITIES } from '../providers/catalog.js';
-import { PROVIDER_IDS } from '../storage/schema.js';
+import { PROVIDER_IDS, ACTIONS } from '../storage/schema.js';
 
 const COST_RANK    = { cheap: 1, medium: 2, premium: 3 };
 const QUALITY_RANK = { basic: 1, strong: 2, best: 3 };
@@ -19,7 +19,7 @@ export function computeRecommendations(providers) {
   if (configured.length === 0) return null;
 
   const recommendations = {};
-  for (const action of ['explain', 'comment', 'refactor', 'ask']) {
+  for (const action of ACTIONS) {
     recommendations[action] = pickBestFor(action, configured);
   }
   return recommendations;

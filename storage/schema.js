@@ -1,6 +1,6 @@
 // storage/schema.js — Config schema, defaults, and migration helpers
 
-export const ACTIONS = ['explain', 'comment', 'refactor', 'ask'];
+export const ACTIONS = ['explain', 'comment', 'refactor', 'ask', 'document'];
 export const PROVIDER_IDS = ['anthropic', 'openai', 'gemini', 'openrouter', 'customEndpoint', 'localLlm'];
 
 export const DEFAULT_SETTINGS = {
@@ -18,10 +18,11 @@ export const DEFAULT_SETTINGS = {
     actionRouting: {
       enabled: false,
       actions: {
-        explain: { providerId: null, modelId: null, isUserOverride: false },
-        comment: { providerId: null, modelId: null, isUserOverride: false },
+        explain:  { providerId: null, modelId: null, isUserOverride: false },
+        comment:  { providerId: null, modelId: null, isUserOverride: false },
         refactor: { providerId: null, modelId: null, isUserOverride: false },
-        ask:     { providerId: null, modelId: null, isUserOverride: false }
+        ask:      { providerId: null, modelId: null, isUserOverride: false },
+        document: { providerId: null, modelId: null, isUserOverride: false }
       }
     }
   }

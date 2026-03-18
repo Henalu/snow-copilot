@@ -21,10 +21,12 @@
   --sna-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   position: fixed !important;
-  top: 80px !important;
-  right: 0 !important;
-  width: var(--sna-width) !important;
-  max-height: calc(100vh - 100px) !important;
+  /* Position/size via CSS vars so JS can override without fighting !important */
+  top:   var(--sna-pos-top,    80px)               !important;
+  right: var(--sna-pos-right,  0px)                !important;
+  left:  var(--sna-pos-left,   auto)               !important;
+  width: var(--sna-pos-width,  var(--sna-width))   !important;
+  max-height: var(--sna-pos-maxh, calc(100vh - 100px)) !important;
   z-index: 99999 !important;
   background: var(--sna-bg) !important;
   border: 1px solid var(--sna-border) !important;
@@ -38,6 +40,20 @@
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.4) !important;
   overflow: hidden !important;
   animation: sna-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Free-floating mode: full border + all rounded corners */
+#sn-assistant-sidebar.sna-sidebar--free {
+  border-right: 1px solid var(--sna-border) !important;
+  border-radius: var(--sna-radius) !important;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.55) !important;
+  animation: none !important;
+}
+
+/* When user has set an explicit height (resize) */
+#sn-assistant-sidebar.sna-sidebar--sized {
+  height:     var(--sna-pos-height, auto) !important;
+  max-height: var(--sna-pos-height, calc(100vh - 100px)) !important;
 }
 
 @keyframes sna-slide-in {
@@ -90,6 +106,71 @@
   border: 1px solid rgba(108, 139, 255, 0.25) !important;
   letter-spacing: 0.04em !important;
   text-transform: uppercase !important;
+}
+
+/* Drag cursor on header when not hovering a button */
+#sn-assistant-sidebar .sna-header {
+  cursor: grab !important;
+}
+#sn-assistant-sidebar .sna-header:active {
+  cursor: grabbing !important;
+}
+#sn-assistant-sidebar .sna-header button {
+  cursor: pointer !important;
+}
+
+/* Reset-position button — same style as close */
+#sn-assistant-sidebar .sna-reset-pos {
+  background: transparent !important;
+  border: 1px solid var(--sna-border) !important;
+  color: var(--sna-text-muted) !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  transition: all 0.15s !important;
+}
+#sn-assistant-sidebar .sna-reset-pos:hover {
+  border-color: var(--sna-accent) !important;
+  color: var(--sna-accent) !important;
+}
+
+/* ─── Resize handles ─────────────────────────────────────────────────────── */
+
+#sn-assistant-sidebar .sna-resize-left {
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  width: 5px !important;
+  height: 100% !important;
+  cursor: ew-resize !important;
+  z-index: 10 !important;
+}
+
+#sn-assistant-sidebar .sna-resize-bottom {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 5px !important;
+  right: 5px !important;
+  height: 5px !important;
+  cursor: ns-resize !important;
+  z-index: 10 !important;
+}
+
+#sn-assistant-sidebar .sna-resize-corner {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 12px !important;
+  height: 12px !important;
+  cursor: sw-resize !important;
+  z-index: 11 !important;
 }
 
 #sn-assistant-sidebar .sna-close {
@@ -167,6 +248,48 @@
 
 #sn-assistant-sidebar .sna-action-icon {
   font-size: 15px !important;
+}
+
+/* Document button — full-width, distinct style to signal it produces a file */
+#sn-assistant-sidebar .sna-action-btn--document {
+  grid-column: 1 / -1 !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 8px 12px !important;
+  border-color: rgba(108, 139, 255, 0.3) !important;
+  color: var(--sna-text-muted) !important;
+}
+
+#sn-assistant-sidebar .sna-action-btn--document:hover {
+  border-color: var(--sna-accent) !important;
+  color: var(--sna-text) !important;
+}
+
+#sn-assistant-sidebar .sna-action-btn--document.active {
+  border-color: var(--sna-accent) !important;
+  color: var(--sna-accent) !important;
+}
+
+#sn-assistant-sidebar .sna-doc-badge {
+  font-size: 9px !important;
+  background: rgba(108, 139, 255, 0.15) !important;
+  color: var(--sna-accent) !important;
+  border: 1px solid rgba(108, 139, 255, 0.3) !important;
+  border-radius: 4px !important;
+  padding: 1px 5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em !important;
+}
+
+#sn-assistant-sidebar .sna-download-notice {
+  margin-top: 12px !important;
+  padding: 6px 10px !important;
+  background: rgba(94, 255, 160, 0.08) !important;
+  border: 1px solid rgba(94, 255, 160, 0.2) !important;
+  border-radius: 6px !important;
+  color: var(--sna-success) !important;
+  font-size: 11.5px !important;
 }
 
 /* ─── Ask box ────────────────────────────────────────────────────────────── */
@@ -267,9 +390,114 @@
   color: var(--sna-text) !important;
   font-size: 12.5px !important;
   line-height: 1.7 !important;
-  white-space: pre-wrap !important;
+  white-space: pre-wrap !important;  /* streaming: respect newlines in raw text */
   font-family: var(--sna-font) !important;
   word-break: break-word !important;
+}
+
+/* Switched to this class once markdown is rendered */
+#sn-assistant-sidebar .sna-response.sna-response--rendered {
+  white-space: normal !important;
+}
+
+/* ─── Markdown elements ───────────────────────────────────────────────────── */
+
+#sn-assistant-sidebar .sna-response h1,
+#sn-assistant-sidebar .sna-response h2,
+#sn-assistant-sidebar .sna-response h3 {
+  color: var(--sna-text) !important;
+  font-family: var(--sna-font) !important;
+  font-weight: 600 !important;
+  margin: 14px 0 6px !important;
+  line-height: 1.3 !important;
+}
+
+#sn-assistant-sidebar .sna-response h1 { font-size: 15px !important; }
+#sn-assistant-sidebar .sna-response h2 { font-size: 13.5px !important; color: var(--sna-accent) !important; }
+#sn-assistant-sidebar .sna-response h3 { font-size: 12.5px !important; color: var(--sna-text-muted) !important; text-transform: uppercase !important; letter-spacing: 0.05em !important; }
+
+#sn-assistant-sidebar .sna-response p {
+  margin: 0 0 10px !important;
+}
+
+#sn-assistant-sidebar .sna-response ul,
+#sn-assistant-sidebar .sna-response ol {
+  margin: 6px 0 10px !important;
+  padding-left: 18px !important;
+}
+
+#sn-assistant-sidebar .sna-response li {
+  margin-bottom: 4px !important;
+}
+
+#sn-assistant-sidebar .sna-response code {
+  font-family: var(--sna-mono) !important;
+  font-size: 11.5px !important;
+  background: var(--sna-surface2) !important;
+  color: #a8d8ff !important;
+  padding: 1px 5px !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--sna-border) !important;
+}
+
+#sn-assistant-sidebar .sna-response pre {
+  background: var(--sna-surface2) !important;
+  border: 1px solid var(--sna-border) !important;
+  border-radius: 7px !important;
+  padding: 10px 12px !important;
+  overflow-x: auto !important;
+  margin: 8px 0 !important;
+}
+
+#sn-assistant-sidebar .sna-response pre code {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 11px !important;
+  color: var(--sna-text) !important;
+}
+
+#sn-assistant-sidebar .sna-response table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 8px 0 12px !important;
+  font-size: 11.5px !important;
+}
+
+#sn-assistant-sidebar .sna-response th,
+#sn-assistant-sidebar .sna-response td {
+  padding: 5px 8px !important;
+  border: 1px solid var(--sna-border) !important;
+  text-align: left !important;
+  vertical-align: top !important;
+  color: var(--sna-text) !important;
+  background: var(--sna-surface) !important;
+}
+
+#sn-assistant-sidebar .sna-response th {
+  background: var(--sna-surface2) !important;
+  color: var(--sna-accent) !important;
+  font-weight: 600 !important;
+}
+
+#sn-assistant-sidebar .sna-response tr:nth-child(even) td {
+  background: var(--sna-surface2) !important;
+}
+
+#sn-assistant-sidebar .sna-response hr {
+  border: none !important;
+  border-top: 1px solid var(--sna-border) !important;
+  margin: 12px 0 !important;
+}
+
+#sn-assistant-sidebar .sna-response strong {
+  font-weight: 600 !important;
+  color: var(--sna-text) !important;
+}
+
+#sn-assistant-sidebar .sna-response em {
+  font-style: italic !important;
+  color: var(--sna-text-muted) !important;
 }
 
 #sn-assistant-sidebar .sna-error {

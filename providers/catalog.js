@@ -28,7 +28,7 @@ export const MODEL_CATALOG = {
       id: 'claude-sonnet-4-6',
       name: 'Claude Sonnet 4.6',
       costTier: 'medium', qualityTier: 'best', latencyTier: 'medium',
-      strengths: ['refactor', 'comment']
+      strengths: ['refactor', 'comment', 'document']
     },
     {
       id: 'claude-haiku-4-5-20251001',
@@ -42,7 +42,7 @@ export const MODEL_CATALOG = {
       id: 'gpt-4.1',
       name: 'GPT-4.1',
       costTier: 'premium', qualityTier: 'best', latencyTier: 'medium',
-      strengths: ['refactor', 'comment']
+      strengths: ['refactor', 'comment', 'document']
     },
     {
       id: 'gpt-4.1-mini',
@@ -99,7 +99,9 @@ export const ACTION_PRIORITIES = {
   explain:  { preferCost: 'cheap',   preferQuality: 'strong', preferLatency: 'fast'   },
   comment:  { preferCost: 'medium',  preferQuality: 'strong', preferLatency: 'medium' },
   refactor: { preferCost: 'premium', preferQuality: 'best',   preferLatency: 'medium' },
-  ask:      { preferCost: 'cheap',   preferQuality: 'strong', preferLatency: 'fast'   }
+  ask:      { preferCost: 'cheap',   preferQuality: 'strong', preferLatency: 'fast'   },
+  // Document generation: prioritizes output quality over cost/speed (comprehensive writing task)
+  document: { preferCost: 'medium',  preferQuality: 'best',   preferLatency: 'medium' }
 };
 
 /** Returns the catalog models for a given provider id, or [] if none. */

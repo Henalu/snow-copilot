@@ -112,20 +112,33 @@ Toda la configuración (incluyendo API keys) se guarda en `chrome.storage.sync`.
 
 ## Estado actual — 2026-03-18
 
-### ✅ v0.3 — Trigger button + arquitectura CSP-safe
+### ✅ v0.4 — Detección genérica + Markdown + Document + Drag/Resize
 
 **Providers implementados:**
 - Anthropic Claude, OpenAI, Google Gemini, OpenRouter, Custom Endpoint, Local LLM (Ollama)
 
-**Features:**
+**Features v0.4 (hoy):**
+- Detección genérica de editor con `detectScriptEditor()` — 5 estrategias incluyendo Shadow DOM
+- `RECORD_TYPE_MAP` centralizado: añadir un tipo nuevo = una línea
+- Guard de `init()` dual: soporta iframe `gsft_main` Y frame top Polaris (fix Client Scripts)
+- Polling timeout ampliado a 20s
+- Renderizado Markdown en el panel: streaming en raw text, render final con `renderMarkdown()`
+- Acción **Document**: genera documentación técnica estructurada y descarga `.doc` (Word-compatible)
+- `document` integrado en ACTIONS, catalog, engine, settings page (Smart Defaults + Routing)
+- Panel lateral **arrastrable** desde el header y **redimensionable** (borde izquierdo, inferior, esquina)
+- Botón ⊞ en el header para reset a posición/tamaño original
+- Drag/resize implementado con CSS custom properties `--sna-pos-*` (no lucha contra `!important`)
+- Fix CSP: eliminados `onclick` inline de options.html → movidos a options.js
+
+**Features v0.3 (mantenidas):**
 - Trigger button ⚡ flotante en el borde derecho — aparece al detectar código, con badge pulsante
 - Click en el trigger → despliega el panel lateral; click de nuevo → lo cierra
 - Badge desaparece al abrir el panel por primera vez
 - Botón × en el header del panel para cerrarlo (el trigger queda visible)
 - Settings page completa con 6 provider cards expandibles
 - Badge de estado por proveedor: Configured / Missing key / Disabled / Experimental
-- Test connection con resultado visible (fix: el resultado ahora se muestra correctamente)
-- Routing: default provider + action-based routing (Explain/Comment/Refactor/Ask → provider+model)
+- Test connection con resultado visible
+- Routing: default provider + action-based routing (Explain/Comment/Refactor/Ask/Document → provider+model)
 - Recommendation engine: recomienda provider+model por acción según tiers de coste/calidad/latencia
 - Smart defaults: "Apply recommended setup" y "Recalculate" sin pisar overrides manuales
 - Estado por acción: Auto vs Custom con botón "Reset to recommended"
@@ -163,10 +176,11 @@ git push origin main → Vercel detecta → redeploy automático
     actionRouting: {
       enabled: false,
       actions: {
-        explain: { providerId, modelId, isUserOverride, recommendedProviderId, recommendedModelId },
-        comment: { ... },
+        explain:  { providerId, modelId, isUserOverride, recommendedProviderId, recommendedModelId },
+        comment:  { ... },
         refactor: { ... },
-        ask:      { ... }
+        ask:      { ... },
+        document: { ... }
       }
     }
   }
@@ -180,18 +194,29 @@ Proveedores con catálogo estático: anthropic, openai, gemini.
 Proveedores sin catálogo (user-defined): openrouter, customEndpoint, localLlm.
 
 ## Contextos ServiceNow soportados
-- Business Rules (`sys_script`) ✅ probado
-- Script Includes (`sys_script_include`) — pendiente probar
-- UI Actions (`sys_ui_action`) — pendiente probar
-- UI Scripts (`sys_ui_script`) — pendiente probar
-- Fix Scripts (`sys_script_fix`) — pendiente probar
-- Background Scripts — pendiente probar
+- Business Rules (`sys_script`) ✅ verificado
+- Script Includes (`sys_script_include`) ✅ verificado
+- Client Scripts (`sys_script_client`) ✅ verificado (Polaris top-frame, fix en init guard)
+- Fix Scripts (`sys_script_fix`) ✅ verificado
+- UI Actions (`sys_ui_action`) ✅ verificado
+- Scripted REST Resource (`sys_ws_operation`, field: `operation_script`) ✅ verificado
+- Scheduled Script Execution (`sysauto_script`) — añadido al mapa, pendiente verificar
+- UI Scripts (`sys_ui_script`) — pendiente verificar
+- Transform Scripts (`sys_transform_script`) — pendiente verificar
+- Background Scripts — pendiente verificar
+
+## Notas de debugging — detección de editor
+Si el trigger no aparece en un tipo de registro:
+1. Abrir DevTools → cambiar contexto a `gsft_main` (o top si no hay gsft_main)
+2. Ejecutar: `detectRecordType()` → verificar que `isKnown: true`
+3. Ejecutar: `detectScriptEditor()` → verificar qué strategy detecta
+4. Si `detectRecordType().isKnown === false` → añadir la tabla a `RECORD_TYPE_MAP` en content.js
+5. Si `detectScriptEditor()` devuelve null → listar textareas con `Array.from(document.querySelectorAll('textarea')).map(t => t.id)`
 
 ## Tareas pendientes
 - [ ] Eliminar `chat.js` duplicado de la raíz del repo
-- [ ] Probar en los demás contextos de script
+- [ ] Verificar Scheduled Scripts, UI Scripts, Transform Scripts, Background Scripts
 - [ ] Verificar cada proveedor end-to-end en producción
-- [ ] Renderizado Markdown en el panel lateral (actualmente textContent)
 
 ## Próximas fases
 - **Fase 2:** Contexto enriquecido — metadata de la instancia, sys_dictionary
@@ -199,7 +224,7 @@ Proveedores sin catálogo (user-defined): openrouter, customEndpoint, localLlm.
 - **Fase 4:** Studio/IDE support
 - **Fase 5:** RAG sobre breaking-trail knowledge base
 
-## Notas de debugging
+## Notas de debugging generales
 - DevTools en ServiceNow: cambiar contexto de `top` a `gsft_main` para ver el DOM del formulario
 - Errores del service worker: chrome://extensions/ → "Service Worker" → "Inspect"
 - Los errores de CSP que aparecen en la consola de ServiceNow son de ServiceNow mismo (usa onclick= inline) — ignorar
