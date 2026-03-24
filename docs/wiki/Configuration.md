@@ -1,124 +1,110 @@
 # Configuration
 
-Open the extension settings by clicking the SN Assistant icon → **Options**.
+Open extension settings from the Chrome toolbar icon, then choose **Options**.
 
----
+## Behavior
 
-## AI Providers
+### Preferred response language
 
-You can enable one or more providers. If multiple are enabled, you can configure routing rules to assign different providers to different actions.
+Choose the default language for generated answers and documents:
+
+- `English`
+- `Spanish`
+
+This applies to `Explain`, `Comment`, `Refactor`, `Ask`, `Document`, and `Document UpdateSet`.
+
+### Auto-show
+
+Controls whether the extension shows its trigger automatically when a supported context is detected.
+
+## Update Set documentation
+
+### Documentation mode
+
+- `List-first`: fastest option, uses the Update Set form plus visible Customer Updates metadata
+- `Deep`: slower but richer, attempts to read `sys_update_xml` payloads and script previews when possible
+
+### Deep mode limits
+
+The current settings also expose:
+
+- fetch limit
+- fetch concurrency
+
+These keep `Deep` mode useful without overwhelming the browser tab.
+
+## RAG
+
+RAG is designed to improve grounding quality for ServiceNow answers, especially `Explain` and `Ask`.
+
+Current source:
+
+- Breaking Trail
+
+Current controls include:
+
+- enable or disable RAG
+- enable or disable the bundled source
+- chunk and context limits
+- show retrieval trace in the panel
+- debug logging
+- enable RAG by action
+
+Current default policy:
+
+- `Explain`: on
+- `Ask`: on
+- `Comment`: off
+- `Refactor`: off
+- `Document`: off
+- `Document UpdateSet`: off
+
+## Providers
+
+You can enable one or more providers and route different actions to different models.
 
 ### Anthropic Claude
 
-Best overall for code tasks. Recommended model: **Claude Sonnet 4.6**.
-
-1. Get an API key at [console.anthropic.com](https://console.anthropic.com)
-2. In Options → AI Providers → enable **Anthropic Claude**
-3. Paste your API key
-4. Select a model:
-   - **Claude Opus 4.6** — highest quality, higher cost
-   - **Claude Sonnet 4.6** — recommended balance of quality and cost
-   - **Claude Haiku 4.5** — fastest and cheapest
-
----
+Recommended default for high-quality coding and documentation tasks.
 
 ### OpenAI
 
-1. Get an API key at [platform.openai.com](https://platform.openai.com)
-2. Enable **OpenAI** in Options
-3. Paste your API key
-4. Select a model:
-   - **GPT-4.1** — premium quality
-   - **GPT-4o** — high quality, good balance
-   - **GPT-4o Mini** — recommended for most tasks
-   - **GPT-4.1 Mini** — fastest and cheapest
-
-**Custom Base URL (optional):** If you use Azure OpenAI or a compatible API, set the base URL here.
-
----
+Good general-purpose alternative with strong model variety.
 
 ### Google Gemini
 
-1. Get an API key at [aistudio.google.com](https://aistudio.google.com)
-2. Enable **Google Gemini** in Options
-3. Paste your API key
-4. Select a model:
-   - **Gemini 2.5 Pro** — premium
-   - **Gemini 2.5 Flash** — balanced
-   - **Gemini 2.0 Flash** — recommended, fast and cost-effective
-
----
+Good speed/quality balance.
 
 ### OpenRouter
 
-Gives you access to Claude, GPT, Gemini, Llama, Mistral, and 100+ other models through a single API key. Good option if you want to try many models without signing up for multiple services.
-
-1. Create an account at [openrouter.ai](https://openrouter.ai) and get an API key
-2. Enable **OpenRouter** in Options
-3. Paste your API key
-4. Enter a model ID (find them at [openrouter.ai/models](https://openrouter.ai/models))
-   - Example: `anthropic/claude-sonnet-4-6`
-   - Example: `openai/gpt-4o-mini`
-   - Example: `meta-llama/llama-3.3-70b-instruct`
-
----
+Useful when you want access to many models through one API key.
 
 ### Custom Endpoint
 
-Point the extension to your own backend proxy instead of calling AI providers directly. Useful if you want to:
-- Keep API keys server-side
-- Add your own rate limiting or logging
-- Use the included Vercel backend (`api/chat.js`)
+Use your own backend or proxy if you want:
 
-1. Enable **Custom Endpoint** in Options
-2. Enter your endpoint URL (e.g. `https://your-project.vercel.app`)
-3. Optionally set a bearer token and model override
-4. Your endpoint must accept `POST /api/chat` with the request body in the SN Assistant format
+- centralized logging
+- server-side key handling
+- custom auth
+- custom business logic
 
----
+### Local LLM
 
-### Local LLM (Ollama / LM Studio)
-
-Run AI models locally on your machine — no API key, no data sent externally.
-
-**Using Ollama:**
-
-1. Install [Ollama](https://ollama.ai)
-2. Pull a model: `ollama pull llama3.2` or `ollama pull codellama`
-3. Enable **Local LLM** in Options
-4. Set Base URL to `http://localhost:11434` (default)
-5. Enter the model name (e.g. `llama3.2`, `codellama`, `mistral`)
-
-**Using LM Studio:**
-
-1. Download [LM Studio](https://lmstudio.ai) and start its local server
-2. Set Base URL to `http://localhost:1234`
-3. Enter the model name as shown in LM Studio
-
-> **Note:** Local models are slower than cloud APIs and may produce lower-quality results for complex code tasks. They are marked as "Experimental".
-
----
+Use Ollama or LM Studio for local-only usage.
 
 ## Routing
 
-By default, all actions use the **default provider** you select.
+The extension supports:
 
-**Action-based routing** lets you assign a different provider and model to each action. For example:
-- Use Anthropic Claude Opus for **Document** (high quality, complex task)
-- Use Claude Haiku for **Explain** (fast and cheap)
+- a default provider
+- optional action-based routing
+- recommended provider/model combinations
 
-### Smart Defaults
+This lets you keep fast models for lightweight work and stronger models for documentation or complex analysis.
 
-The recommendation engine analyzes your enabled providers and suggests the best provider + model per action based on cost, quality, and latency tiers.
+## Data and privacy
 
-- Click **Apply recommended setup** to apply suggestions for all actions marked as **Auto**
-- Actions marked as **Custom** keep your manual selection even after recalculating
-- Click **Reset to recommended** on any individual action to revert it
-
----
-
-## Data & Privacy
-
-- API keys are stored in `chrome.storage.sync` — they sync across your Chrome profile but never leave your browser except when making API calls to your chosen provider
-- Export your settings as JSON for backup: Options → Data → **Export settings**
-- Import a backup: Options → Data → **Import settings**
+- API keys are stored in `chrome.storage.sync`
+- keys are only sent to the provider you choose
+- the RAG index is bundled locally inside the extension package
+- `Deep` Update Set mode reads additional XML payload data from the active ServiceNow instance

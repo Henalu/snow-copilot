@@ -1,151 +1,154 @@
-# SN Assistant ⚡
+# SN Assistant
 
-AI copilot for ServiceNow developers. Explain, comment, refactor, and document scripts directly from your browser — using any AI provider you choose.
+AI copilot for ServiceNow developers. Explain, comment, refactor, ask questions about scripts, and generate technical documentation directly from the browser.
 
----
+SN Assistant is no longer just a generic LLM wrapper. The current build includes:
 
-## Features
+- multi-provider AI routing
+- ServiceNow-aware prompts and guardrails
+- RAG grounded with Breaking Trail content
+- one-click script documentation as a Word document
+- one-click Update Set documentation
+- `DEEP` mode for richer Update Set grounding from `sys_update_xml`
+- preferred response language in English or Spanish
 
-| Action | What it does |
+## Core actions
+
+| Action | Purpose |
 |---|---|
-| **Explain** | Understand what a script does — logic, APIs used, side effects |
-| **Comment** | Generate JSDoc + inline comments following SN conventions |
-| **Refactor** | Improve code quality, readability, and ServiceNow best practices |
-| **Ask** | Ask any specific question about the script |
-| **Document** | Generate full technical documentation and download as a Word file |
+| `Explain` | Explain what the current script does, with ServiceNow-aware grounding when useful |
+| `Comment` | Add JSDoc and inline comments |
+| `Refactor` | Improve structure and ServiceNow implementation quality |
+| `Ask` | Ask a free-form question about the current script |
+| `Document` | Generate technical documentation for the current script and download it as a Word document |
+| `Document UpdateSet` | Generate change documentation for the current Update Set and its visible Customer Updates |
 
-**Supported AI providers:** Anthropic Claude · OpenAI · Google Gemini · OpenRouter · Custom Endpoint · Local LLM (Ollama)
+## What is special about this build
 
-**Supported record types:** Business Rules · Script Includes · Client Scripts · Fix Scripts · UI Actions · Scripted REST Resources · Scheduled Scripts · and more
+- **Provider flexibility:** Anthropic, OpenAI, Gemini, OpenRouter, Custom Endpoint, and Local LLM
+- **Grounding:** Breaking Trail is bundled as a local RAG source for higher-quality `Ask` and `Explain` answers
+- **ServiceNow-specific change docs:** Update Set documentation can run in `List-first` or `DEEP` mode
+- **Practical UX:** draggable and resizable panel, execution trace for long-running Update Set docs, direct Word download
+- **Language control:** all responses can be generated in English or Spanish from settings
 
----
+## Quick start
 
-## Quick Start
+### 1. Load the extension locally
 
-### 1. Install the extension
+1. Clone or download this repository
+2. Open `chrome://extensions`
+3. Enable **Developer mode**
+4. Click **Load unpacked**
+5. Select the repository root, where `manifest.json` lives
 
-> Chrome Web Store listing coming soon.
+### 2. Configure at least one provider
 
-**Load unpacked (developer mode):**
-1. Clone or download this repo
-2. Go to `chrome://extensions`
-3. Enable **Developer mode** (top right toggle)
-4. Click **Load unpacked** → select the repo folder (where `manifest.json` lives)
+1. Open the extension **Options**
+2. Enable one or more AI providers
+3. Enter the required API key or local endpoint
+4. Save settings
 
-### 2. Configure a provider
+Optional but recommended:
 
-1. Click the SN Assistant icon in the Chrome toolbar → **Options**
-2. Enable at least one AI provider and enter your API key
-3. Click **Save settings**
-
-No API key yet? Try:
-- **OpenRouter** — unified API that gives access to Claude, GPT, Gemini and 100+ other models with a single key
-- **Local LLM** — run [Ollama](https://ollama.ai) locally and use it for free with no API key
+- choose a preferred response language
+- enable or tune RAG
+- choose the Update Set documentation mode: `List-first` or `Deep`
 
 ### 3. Use it in ServiceNow
 
-1. Open any script editor in ServiceNow (Business Rule, Script Include, etc.)
-2. The ⚡ trigger button appears on the right edge of the screen
-3. Click it to open the assistant panel
-4. Choose an action and wait for the AI response
+#### Script context
 
-The panel is draggable and resizable. Use the ⊞ button to reset its position.
+1. Open a supported script form in ServiceNow
+2. Click the floating trigger button
+3. Choose `Explain`, `Comment`, `Refactor`, `Ask`, or `Document`
 
----
+#### Update Set context
+
+1. Open a `sys_update_set` record
+2. Optionally add extra business or technical context in the sidebar textarea
+3. Click `Document UpdateSet`
+4. Wait for the action to complete
+5. The Word document downloads automatically
+
+## RAG
+
+RAG is currently focused on answer quality, not raw speed.
+
+- default source: Breaking Trail
+- default actions: `Explain` and `Ask`
+- default behavior: off for `Comment`, `Refactor`, `Document`, and `Document UpdateSet`
+
+See [docs/RAG.md](docs/RAG.md) for the full architecture and tuning notes.
+
+## Update Set documentation
+
+Current modes:
+
+- **List-first:** uses the Update Set form plus visible `Customer Updates` metadata
+- **Deep:** attempts to enrich visible Customer Updates with `sys_update_xml` payload details and script previews
+
+See [docs/ChangeDocumentation.md](docs/ChangeDocumentation.md) for the current design and roadmap.
+
+## Supported AI providers
+
+| Provider | Notes |
+|---|---|
+| Anthropic Claude | Strong default for most coding and documentation tasks |
+| OpenAI | Good general-purpose alternative |
+| Google Gemini | Fast option with solid quality |
+| OpenRouter | Useful when you want many models through one key |
+| Custom Endpoint | Good for proxying requests through your own backend |
+| Local LLM | Ollama or LM Studio for local usage |
+
+## Supported ServiceNow contexts
+
+| Context | Status |
+|---|---|
+| Business Rules | Verified |
+| Script Includes | Verified |
+| Client Scripts | Verified |
+| Fix Scripts | Verified |
+| UI Actions | Verified |
+| Scripted REST Resources | Verified |
+| Scheduled Scripts | Verified |
+| Update Sets | Verified |
+| UI Scripts | Pending verification |
+| Transform Scripts | Pending verification |
+| Background Scripts | Pending verification |
+
+## Architecture summary
+
+- `content.js`: classic content script for CSP-safe DOM integration inside ServiceNow
+- `service-worker.js`: ES module background worker for provider calls and streaming
+- `providers/`: provider adapters, prompt assembly, streaming parsing, action budgets
+- `rag/`: bundled index loading, retrieval, and grounding prompt assembly
+- `change-documentation/`: normalization and planning for Update Set documentation
+- `storage/schema.js`: defaults, migrations, and persisted settings
 
 ## Documentation
 
-Full documentation is available in the [GitHub Wiki](https://github.com/Henalu/snow-copilot/wiki):
+Project docs:
 
-- [Installation Guide](https://github.com/Henalu/snow-copilot/wiki/Installation)
-- [Provider Configuration](https://github.com/Henalu/snow-copilot/wiki/Configuration)
-- [Actions Reference](https://github.com/Henalu/snow-copilot/wiki/Actions)
-- [FAQ & Troubleshooting](https://github.com/Henalu/snow-copilot/wiki/FAQ-and-Troubleshooting)
+- [docs/RAG.md](docs/RAG.md)
+- [docs/ChangeDocumentation.md](docs/ChangeDocumentation.md)
 
----
+Wiki source:
 
-## Supported AI Providers
+- [docs/wiki/Home.md](docs/wiki/Home.md)
+- [docs/wiki/Installation.md](docs/wiki/Installation.md)
+- [docs/wiki/Configuration.md](docs/wiki/Configuration.md)
+- [docs/wiki/Actions.md](docs/wiki/Actions.md)
+- [docs/wiki/FAQ-and-Troubleshooting.md](docs/wiki/FAQ-and-Troubleshooting.md)
 
-| Provider | API Key required | Notes |
-|---|---|---|
-| Anthropic Claude | Yes | Best for code tasks; Sonnet 4.6 recommended |
-| OpenAI | Yes | GPT-4o, GPT-4.1, GPT-4o Mini |
-| Google Gemini | Yes | Gemini 2.0/2.5 Flash/Pro |
-| OpenRouter | Yes | Access 100+ models with one key |
-| Custom Endpoint | Optional | Point to your own proxy (Vercel, etc.) |
-| Local LLM | No | Ollama / LM Studio — fully local, no data sent externally |
+## Privacy
 
----
+- API keys are stored in `chrome.storage.sync`
+- keys are only sent to the provider you configure, unless you choose `Custom Endpoint`
+- the bundled RAG index is local to the extension package
+- Update Set `DEEP` mode reads `sys_update_xml` from the active ServiceNow instance when enabled
 
-## Supported ServiceNow Record Types
-
-| Record type | Table | Status |
-|---|---|---|
-| Business Rules | `sys_script` | Verified |
-| Script Includes | `sys_script_include` | Verified |
-| Client Scripts | `sys_script_client` | Verified |
-| Fix Scripts | `sys_script_fix` | Verified |
-| UI Actions | `sys_ui_action` | Verified |
-| Scripted REST Resources | `sys_ws_operation` | Verified |
-| Scheduled Scripts | `sysauto_script` | Verified |
-| UI Scripts | `sys_ui_script` | Pending verification |
-| Transform Scripts | `sys_transform_script` | Pending verification |
-| Background Scripts | — | Pending verification |
-
----
-
-## Architecture
-
-- **Manifest V3** Chrome extension — no background page, uses a service worker
-- **No bundler** — vanilla JavaScript, no build step required
-- **CSP-safe** — content script runs as a classic script, bypassing ServiceNow's strict Content Security Policy
-- **Streaming** — responses streamed via Chrome port messaging, rendered with a lightweight Markdown parser
-- **Privacy** — API keys stored locally in `chrome.storage.sync`, never sent to any third party beyond your chosen AI provider
-
----
-
-## Feedback & Support
-
-- **Bug reports:** [Open a bug report](https://github.com/Henalu/snow-copilot/issues/new?template=bug_report.yml)
-- **Feature requests:** [Submit a feature request](https://github.com/Henalu/snow-copilot/issues/new?template=feature_request.yml)
-- **Questions & discussion:** [GitHub Discussions](https://github.com/Henalu/snow-copilot/discussions)
-
----
-
-## Project Structure
-
-```
-snow-copilot/
-├── manifest.json          ← MV3, background type:"module", all_frames, host_permissions
-├── content.js             ← Classic script: trigger button, sidebar panel, port messaging
-├── service-worker.js      ← ES module: streaming AI calls via provider adapters
-├── sidebar.css            ← Panel styles
-├── options.html           ← Settings page
-├── options.js             ← Settings controller
-├── api/
-│   └── chat.js            ← Vercel Edge Function (optional proxy)
-├── storage/
-│   └── schema.js          ← Config schema, defaults, migration
-├── providers/
-│   ├── catalog.js         ← Provider metadata, model catalog, action priorities
-│   ├── prompts.js         ← Prompt templates per action
-│   ├── manager.js         ← Provider resolution and streaming relay
-│   ├── anthropic.js
-│   ├── openai.js
-│   ├── gemini.js
-│   ├── openrouter.js
-│   ├── customEndpoint.js
-│   └── localLlm.js
-├── recommendation/
-│   └── engine.js          ← Smart defaults recommendation engine
-└── docs/
-    └── wiki/              ← Source for GitHub Wiki pages
-```
-
----
+You should still provide a public privacy policy before publishing to the Chrome Web Store.
 
 ## License
 
-Proprietary — © 2025 CoreX. All rights reserved.
-
-The source code is available for transparency and community feedback. Personal and internal organizational use is permitted. Redistribution, resale, and use as the basis for competing products are prohibited without written permission. See [LICENSE](LICENSE) for full terms.
+Proprietary - see [LICENSE](LICENSE).

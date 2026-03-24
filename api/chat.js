@@ -1,6 +1,6 @@
 // SN Assistant — api/chat.js
 // Vercel Serverless Function — Edge Runtime
-// Recibe { action, code, question, context } y hace streaming a Claude API
+// Receives { action, code, question, context, prompt? } and streams Claude output.
 
 import Anthropic from '@anthropic-ai/sdk';
 
@@ -8,16 +8,20 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY
 });
 
-// ─── Prompts ──────────────────────────────────────────────────────────────────
-
-const SYSTEM_BASE = `You are an expert ServiceNow developer assistant. 
+const SYSTEM_BASE = `You are an expert ServiceNow developer assistant.
 You have deep knowledge of:
 - ServiceNow JavaScript (GlideRecord, GlideSystem, GlideDateTime, etc.)
 - Business Rules, Script Includes, UI Actions, UI Scripts, Fix Scripts
 - ServiceNow best practices, performance considerations, and security
 - Glide APIs and the ServiceNow platform architecture
 
-Be concise, practical, and precise. Format code blocks when relevant.`;
+Be concise, practical, and precise. Format code blocks when relevant.
+
+Important reliability rules:
+- Prefer valid ServiceNow platform patterns over generic JavaScript advice.
+- Do not invent Glide APIs, helper objects, unsupported methods, or fake platform capabilities.
+- Respect server-side vs client-side execution constraints explicitly.
+- If the context is incomplete, say what is uncertain instead of guessing.`;
 
 function buildPrompt(action, code, context, question) {
   const scriptType = context?.scriptType || 'script';
@@ -91,26 +95,65 @@ ${code}
 Answer concisely and directly. Include code examples if helpful.`
       };
 
+    case 'document':
+      return {
+        system: SYSTEM_BASE,
+        user: `Generate complete technical documentation for this ${scriptType}.
+
+Use the following structure exactly (markdown headings):
+
+# [Descriptive title for the script]
+
+## Overview
+What this script does and why it exists (2-4 sentences, business context).
+
+## Trigger / Entry Point
+When and how this script executes (e.g. Business Rule timing, Client Script event, REST endpoint, scheduler frequency).
+
+## Inputs & Parameters
+Table or list of inputs: variables read from current record, parameters, system properties, etc.
+
+## Logic Description
+Numbered step-by-step walkthrough of what the script does, written so both developers and functional consultants can understand it.
+
+## ServiceNow APIs Used
+Brief list of Glide APIs, platform objects, or GlideAjax calls (e.g. GlideRecord, gs.getProperty, GlideAggregate).
+
+## Dependencies
+Script Includes, tables queried or updated, system properties, other records this script relies on.
+
+## Side Effects & Outputs
+What records, fields, or external systems are created/modified/notified as a result.
+
+## Notes & Recommendations
+Known limitations, performance considerations, security notes, or suggested improvements.
+
+---
+
+Script (${scriptType}):
+\`\`\`javascript
+${code}
+\`\`\`
+
+Write in English. Be thorough but concise. Use markdown formatting throughout.`
+      };
+
     default:
       throw new Error(`Unknown action: ${action}`);
   }
 }
-
-// ─── Handler ──────────────────────────────────────────────────────────────────
 
 export const config = {
   runtime: 'edge'
 };
 
 export default async function handler(req) {
-  // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type'
   };
 
-  // Preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers });
   }
@@ -126,7 +169,7 @@ export default async function handler(req) {
     return new Response('Invalid JSON', { status: 400, headers });
   }
 
-  const { action, code, question = '', context = {} } = body;
+  const { action, code, question = '', context = {}, prompt: providedPrompt = null } = body;
 
   if (!action || !code) {
     return new Response('Missing action or code', { status: 400, headers });
@@ -134,12 +177,13 @@ export default async function handler(req) {
 
   let prompt;
   try {
-    prompt = buildPrompt(action, code, context, question);
+    prompt = providedPrompt?.system && providedPrompt?.user
+      ? providedPrompt
+      : buildPrompt(action, code, context, question);
   } catch (err) {
     return new Response(err.message, { status: 400, headers });
   }
 
-  // Streaming response via SSE
   const stream = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();

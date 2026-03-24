@@ -1,10 +1,23 @@
 // storage/schema.js — Config schema, defaults, and migration helpers
 
+import { DEFAULT_RAG_SETTINGS } from '../rag/config.js';
+
 export const ACTIONS = ['explain', 'comment', 'refactor', 'ask', 'document'];
 export const PROVIDER_IDS = ['anthropic', 'openai', 'gemini', 'openrouter', 'customEndpoint', 'localLlm'];
+export const RESPONSE_LANGUAGES = ['en', 'es'];
+
+function normalizePreferredLanguage(value) {
+  return RESPONSE_LANGUAGES.includes(value) ? value : 'en';
+}
 
 export const DEFAULT_SETTINGS = {
   autoShow: true,
+  preferredLanguage: 'en',
+  changeDocumentation: {
+    updateSetMode: 'list',
+    deepFetchLimit: 12,
+    deepFetchConcurrency: 3
+  },
   providers: {
     anthropic:     { enabled: false, apiKey: '',  model: 'claude-sonnet-4-6' },
     openai:        { enabled: false, apiKey: '',  model: 'gpt-4o-mini', baseUrl: '' },
@@ -25,10 +38,10 @@ export const DEFAULT_SETTINGS = {
         document: { providerId: null, modelId: null, isUserOverride: false }
       }
     }
-  }
+  },
+  rag: DEFAULT_RAG_SETTINGS
 };
 
-/** Recursively merge source into target, preserving existing values where source is undefined */
 function deepMerge(target, source) {
   if (!source || typeof source !== 'object' || Array.isArray(source)) return source ?? target;
   const result = { ...target };
@@ -42,18 +55,22 @@ function deepMerge(target, source) {
   return result;
 }
 
-/**
- * Migrate from old settings format to new multi-provider format.
- * Preserves existing user config (e.g. backendUrl → customEndpoint.url).
- */
 export function migrateSettings(stored) {
   const settings = deepMerge(DEFAULT_SETTINGS, stored);
+  settings.preferredLanguage = normalizePreferredLanguage(
+    stored.preferredLanguage || stored.responseLanguage || settings.preferredLanguage
+  );
+  settings.changeDocumentation = {
+    ...DEFAULT_SETTINGS.changeDocumentation,
+    ...(stored.changeDocumentation || {})
+  };
+  if (!['list', 'deep'].includes(settings.changeDocumentation.updateSetMode)) {
+    settings.changeDocumentation.updateSetMode = DEFAULT_SETTINGS.changeDocumentation.updateSetMode;
+  }
 
-  // Migrate old backendUrl → customEndpoint.url
   if (stored.backendUrl && !stored.providers?.customEndpoint?.url) {
     settings.providers.customEndpoint.url = stored.backendUrl;
     settings.providers.customEndpoint.enabled = true;
-    // If we migrated, set customEndpoint as default provider
     if (!settings.routing.defaultProvider) {
       settings.routing.defaultProvider = 'customEndpoint';
     }
@@ -68,12 +85,12 @@ export async function loadSettings() {
 }
 
 export async function saveSettings(settings) {
-  // Store the entire settings object. chrome.storage.sync limit is 100KB total / 8KB per key.
-  // Splitting providers so each key is small and stays within per-key limit.
-  const toStore = {
+  await chrome.storage.sync.set({
     autoShow: settings.autoShow,
+    preferredLanguage: normalizePreferredLanguage(settings.preferredLanguage),
+    changeDocumentation: settings.changeDocumentation,
     providers: settings.providers,
-    routing: settings.routing
-  };
-  await chrome.storage.sync.set(toStore);
+    routing: settings.routing,
+    rag: settings.rag
+  });
 }

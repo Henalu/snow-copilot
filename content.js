@@ -4,6 +4,40 @@
 
 const SN_ASSISTANT_ID = 'sn-assistant-sidebar';
 const SN_TRIGGER_ID   = 'sna-trigger-btn';
+const ACTION_TIMEOUT_MS = 180000;
+const ACTION_TIMEOUTS_MS = {
+  documentUpdateSet: 420000
+};
+const MAX_MARKDOWN_RENDER_CHARS = 24000;
+
+let activeStreamPort = null;
+let activeStreamTimer = null;
+let activeStreamAction = null;
+let currentExecutionTrace = null;
+
+function isExtensionContextInvalidatedError(error) {
+  return /Extension context invalidated/i.test(String(error?.message || error || ''));
+}
+
+function getFriendlyRuntimeErrorMessage(error) {
+  if (isExtensionContextInvalidatedError(error)) {
+    return 'The extension was reloaded or updated. Refresh this ServiceNow tab and try again.';
+  }
+
+  return error?.message || 'Could not communicate with the extension background service.';
+}
+
+function connectRuntimePort(name) {
+  try {
+    if (!chrome?.runtime?.id) {
+      throw new Error('Extension context invalidated.');
+    }
+
+    return chrome.runtime.connect({ name });
+  } catch (error) {
+    throw new Error(getFriendlyRuntimeErrorMessage(error));
+  }
+}
 
 // ─── Record type registry ─────────────────────────────────────────────────────
 // Maps ServiceNow table names → human label + expected Monaco textarea field name.
@@ -20,6 +54,8 @@ const RECORD_TYPE_MAP = {
   'sys_transform_map':    { label: 'Transform Map',     scriptField: 'script' },
   'sys_transform_script': { label: 'Transform Script',  scriptField: 'script' },
   'sysauto_script':       { label: 'Scheduled Script',  scriptField: 'script' },
+  'sys_api_stats_script': { label: 'Scheduled Script',  scriptField: 'script' },
+  'sys_update_set':       { label: 'Update Set',        scriptField: null },
 };
 
 // Selectors for the hidden textarea that Monaco uses to sync content to the form.
@@ -184,10 +220,87 @@ function hasCodeEditor() {
   return extractCode() !== null;
 }
 
+function findFieldBySuffix(suffixes) {
+  for (const suffix of suffixes) {
+    const selectors = [
+      `input[id$=".${suffix}"]`,
+      `textarea[id$=".${suffix}"]`,
+      `select[id$=".${suffix}"]`,
+      `input[name$=".${suffix}"]`,
+      `textarea[name$=".${suffix}"]`,
+      `select[name$=".${suffix}"]`
+    ];
+
+    for (const selector of selectors) {
+      const field = document.querySelector(selector) || querySelectorDeep(selector);
+      if (field) return field;
+    }
+  }
+
+  return null;
+}
+
+function hasUpdateSetForm() {
+  if (detectRecordType().table !== 'sys_update_set') return false;
+
+  return !!findFieldBySuffix([
+    'name',
+    'state',
+    'description',
+    'short_description',
+    'application',
+    'application_name',
+    'scope'
+  ]);
+}
+
+function isUpdateSetContext() {
+  return hasUpdateSetForm();
+}
+
+function hasRelevantAssistantContext() {
+  return hasCodeEditor() || isUpdateSetContext();
+}
+
+function getVisibleActions() {
+  return isUpdateSetContext()
+    ? [{ id: 'documentUpdateSet', label: 'Document UpdateSet', icon: '🧾', documentStyle: true, badge: 'List-first' }]
+    : [
+        { id: 'explain', label: 'Explain', icon: '🔍' },
+        { id: 'comment', label: 'Comment', icon: '💬' },
+        { id: 'refactor', label: 'Refactor', icon: '✨' },
+        { id: 'ask', label: 'Ask', icon: '❓' },
+        { id: 'document', label: 'Document', icon: '📄', documentStyle: true, badge: '↓ .doc' }
+      ];
+}
+
+function buildActionButtonsMarkup() {
+  return getVisibleActions().map((action) => {
+    const className = action.documentStyle
+      ? 'sna-action-btn sna-action-btn--document'
+      : 'sna-action-btn';
+    const badgeMarkup = action.badge
+      ? `<span class="sna-doc-badge">${action.badge}</span>`
+      : '';
+
+    return `
+      <button class="${className}" data-action="${action.id}">
+        <span class="sna-action-icon">${action.icon}</span>
+        <span>${action.label}</span>
+        ${badgeMarkup}
+      </button>
+    `;
+  }).join('');
+}
+
 // ─── Sidebar panel ────────────────────────────────────────────────────────────
 
 function createSidebar() {
   if (document.getElementById(SN_ASSISTANT_ID)) return;
+  const isUpdateSet = isUpdateSetContext();
+  const contextPlaceholder = isUpdateSet
+    ? 'Add functional or technical context for this Update Set'
+    : 'Ask anything about this script...';
 
   const sidebar = document.createElement('div');
   sidebar.id = SN_ASSISTANT_ID;
@@ -206,48 +319,30 @@ function createSidebar() {
 
     <div class="sna-body" id="sna-body">
       <div class="sna-actions">
-        <button class="sna-action-btn" data-action="explain">
-          <span class="sna-action-icon">🔍</span>
-          <span>Explain</span>
-        </button>
-        <button class="sna-action-btn" data-action="comment">
-          <span class="sna-action-icon">💬</span>
-          <span>Comment</span>
-        </button>
-        <button class="sna-action-btn" data-action="refactor">
-          <span class="sna-action-icon">✨</span>
-          <span>Refactor</span>
-        </button>
-        <button class="sna-action-btn" data-action="ask">
-          <span class="sna-action-icon">❓</span>
-          <span>Ask</span>
-        </button>
-        <button class="sna-action-btn sna-action-btn--document" data-action="document">
-          <span class="sna-action-icon">📄</span>
-          <span>Document</span>
-          <span class="sna-doc-badge">↓ .doc</span>
-        </button>
+        ${buildActionButtonsMarkup()}
       </div>
 
-      <div class="sna-ask-box" id="sna-ask-box" style="display:none;">
+      <div class="sna-ask-box" id="sna-ask-box" style="display:${isUpdateSet ? 'flex' : 'none'};">
         <textarea
           id="sna-question-input"
           class="sna-textarea"
-          placeholder="Ask anything about this script..."
+          placeholder="${contextPlaceholder}"
           rows="3"
         ></textarea>
-        <button class="sna-send-btn" id="sna-send-question">Send</button>
+        <button class="sna-send-btn" id="sna-send-question" style="display:${isUpdateSet ? 'none' : 'inline-flex'};">Send</button>
       </div>
 
       <div class="sna-response-area" id="sna-response-area">
         <div class="sna-placeholder" id="sna-placeholder">
-          <p>Select an action to analyze the current script.</p>
+          <p>${isUpdateSet ? 'Generate change documentation for this Update Set and its visible Customer Updates.' : 'Select an action to analyze the current script.'}</p>
         </div>
         <div class="sna-loading" id="sna-loading" style="display:none;">
           <div class="sna-spinner"></div>
           <span>Analyzing...</span>
         </div>
+        <div class="sna-execution-trace" id="sna-execution-trace" style="display:none;"></div>
         <div class="sna-response" id="sna-response" style="display:none;"></div>
+        <div class="sna-grounding" id="sna-grounding" style="display:none;"></div>
       </div>
 
       <div class="sna-footer">
@@ -275,10 +370,14 @@ function updateContextLabel() {
 
 function initSidebarEvents(sidebar) {
   document.getElementById('sna-close').addEventListener('click', () => {
+    cancelActiveStream();
     sidebar.remove();
     document.getElementById(SN_TRIGGER_ID)?.classList.remove('active');
   });
 
+  const askBox = document.getElementById('sna-ask-box');
+  const questionInput = document.getElementById('sna-question-input');
+  const isUpdateSet = isUpdateSetContext();
   const actionBtns = sidebar.querySelectorAll('.sna-action-btn');
   actionBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -288,23 +387,31 @@ function initSidebarEvents(sidebar) {
       btn.classList.add('active');
 
       if (action === 'ask') {
-        document.getElementById('sna-ask-box').style.display = 'flex';
+        askBox.style.display = 'flex';
+      } else if (action === 'documentUpdateSet') {
+        askBox.style.display = 'flex';
+        runAction(action, questionInput.value.trim());
       } else {
-        document.getElementById('sna-ask-box').style.display = 'none';
+        askBox.style.display = 'none';
         runAction(action);
       }
     });
   });
 
   document.getElementById('sna-send-question').addEventListener('click', () => {
-    const question = document.getElementById('sna-question-input').value.trim();
+    const question = questionInput.value.trim();
     if (question) runAction('ask', question);
   });
 
-  document.getElementById('sna-question-input').addEventListener('keydown', (e) => {
+  questionInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       const question = e.target.value.trim();
-      if (question) runAction('ask', question);
+      if (!question) return;
+      if (isUpdateSet) {
+        runAction('documentUpdateSet', question);
+      } else {
+        runAction('ask', question);
+      }
     }
   });
 
@@ -320,45 +427,708 @@ function initSidebarEvents(sidebar) {
 // ─── Action execution ─────────────────────────────────────────────────────────
 
 function runAction(action, question = '') {
-  const code = extractCode();
+  runActionInternal(action, question).catch((error) => {
+    clearActiveStreamState();
+    if (action === 'documentUpdateSet') {
+      finalizeExecutionTrace('error', error?.message || 'The update set action failed before generation started.');
+    }
+    showError(error?.message || 'Unexpected error while running the action.');
+  });
+}
 
-  if (!code) {
-    showError('No script detected on this page. Make sure a script editor is open.');
+async function runActionInternal(action, question = '') {
+  if (isSidebarBusy()) {
+    updateLoadingLabel('An action is already running...');
     return;
   }
 
+  let code = '';
   const context = getPageContext();
-  showLoading(action === 'document' ? 'Generating documentation...' : null);
+  const isBackgroundOnlyAction = action === 'documentUpdateSet';
 
-  const port = chrome.runtime.connect({ name: 'ai-stream' });
-  let fullText = '';
+  if (action === 'documentUpdateSet') {
+    beginExecutionTrace(action, {
+      summary: 'Collecting Update Set metadata and visible Customer Updates.'
+    });
+    clearGrounding();
+    showLoading('Collecting update set details...');
+    setSidebarBusy(true);
+
+    const collectionStartedAt = Date.now();
+    const changeDocumentationSettings = await loadChangeDocumentationSettings();
+    addExecutionTraceStep({
+      phase: 'collect-config',
+      label: 'Documentation mode resolved',
+      elapsedMs: Date.now() - collectionStartedAt,
+      meta: {
+        mode: changeDocumentationSettings.updateSetMode,
+        deepFetchLimit: changeDocumentationSettings.deepFetchLimit,
+        deepFetchConcurrency: changeDocumentationSettings.deepFetchConcurrency
+      }
+    });
+
+    const packageData = await collectUpdateSetData(changeDocumentationSettings, (progress) => {
+      addExecutionTraceStep(progress);
+    });
+    if (!packageData) {
+      clearActiveStreamState();
+      finalizeExecutionTrace('error', 'Could not capture the Update Set form or visible related updates.');
+      showError('Could not read this Update Set form. Make sure the record and the Customer Updates related list are visible.');
+      return;
+    }
+    packageData.userContext = typeof question === 'string' ? question.trim() : '';
+    context.packageData = packageData;
+    addExecutionTraceStep({
+      phase: 'collect',
+      label: 'Captured Update Set data',
+      elapsedMs: Date.now() - collectionStartedAt,
+      meta: {
+        mode: packageData.diagnostics?.collectionMode ?? 'list',
+        updateCount: packageData.customerUpdates.length,
+        groupableUpdates: packageData.customerUpdates.length,
+        documentCount: packageData.diagnostics?.documentCount ?? 0,
+        matchedTables: packageData.diagnostics?.tableCount ?? 0,
+        rawRows: packageData.diagnostics?.rawRowCount ?? 0,
+        dedupedRows: packageData.diagnostics?.dedupedCount ?? 0,
+        deepCandidates: packageData.diagnostics?.deepCandidates ?? 0,
+        deepFetched: packageData.diagnostics?.deepFetchedCount ?? 0,
+        deepFailed: packageData.diagnostics?.deepFailedCount ?? 0,
+        userContextChars: packageData.userContext.length
+      }
+    });
+    updateLoadingLabel('Generating update set documentation...');
+  } else {
+    clearExecutionTrace();
+    code = extractCode();
+    if (!code) {
+      showError('No script detected on this page. Make sure a script editor is open.');
+      return;
+    }
+    clearGrounding();
+    showLoading(action === 'document' ? 'Generating documentation...' : null);
+    setSidebarBusy(true);
+  }
+
+  let port;
+  try {
+    port = connectRuntimePort('ai-stream');
+  } catch (error) {
+    clearActiveStreamState();
+    throw new Error(getFriendlyRuntimeErrorMessage(error));
+  }
+
+  trackActiveStream(port, action);
+  const responseChunks = [];
 
   port.onMessage.addListener((msg) => {
+    if (msg.type !== 'done' && msg.type !== 'error') {
+      refreshActiveStreamTimeout(port, action);
+    } else {
+      clearActiveStreamTimer();
+    }
+
     if (msg.type === 'label') {
       const el = document.getElementById('sna-model-label');
       if (el) el.textContent = msg.label;
-    } else if (msg.type === 'chunk') {
-      if (fullText === '') showResponse('');
-      fullText += msg.chunk;
-      updateResponse(fullText);
-    } else if (msg.type === 'done') {
-      finalizeResponse(fullText);
-      if (action === 'document') {
-        const filename = generateWordDoc(fullText, context);
-        // Append download confirmation below the rendered response
-        const notice = document.createElement('p');
-        notice.className = 'sna-download-notice';
-        notice.textContent = '📥 Downloaded: ' + filename;
-        document.getElementById('sna-response').appendChild(notice);
+    } else if (msg.type === 'progress') {
+      if (isBackgroundOnlyAction) {
+        handleExecutionProgress(msg);
       }
+    } else if (msg.type === 'retrieval') {
+      if (!isBackgroundOnlyAction) renderGrounding(msg.retrieval);
+    } else if (msg.type === 'chunk') {
+      responseChunks.push(msg.chunk);
+      if (!isBackgroundOnlyAction) {
+        if (responseChunks.length === 1) showResponse('');
+        appendResponseChunk(msg.chunk);
+      }
+    } else if (msg.type === 'done') {
+      const finalText = typeof msg.fullText === 'string' ? msg.fullText : responseChunks.join('');
       port.disconnect();
+      if (action === 'documentUpdateSet') {
+        addExecutionTraceStep({
+          phase: 'download',
+          label: 'Preparing Word download',
+          meta: {
+            outputChars: finalText.length
+          }
+        });
+        updateLoadingLabel('Preparing Word download...');
+        setTimeout(() => {
+          try {
+            const filename = generateWordDoc(finalText, context);
+            clearActiveStreamState(port);
+            finalizeExecutionTrace('done', 'Word document generated successfully.', {
+              filename,
+              outputChars: finalText.length
+            });
+            showDownloadSuccess(filename, 'Update Set documentation downloaded successfully.');
+          } catch (err) {
+            console.error('[SN Assistant] Word download failed', err);
+            clearActiveStreamState(port);
+            finalizeExecutionTrace('error', `Word download failed: ${err.message || 'Unknown error'}`);
+            showError(`Could not download the Word document: ${err.message || 'Unknown error'}`);
+          }
+        }, 50);
+        return;
+      }
+
+      finalizeResponse(finalText);
+      clearActiveStreamState(port);
+      if (action === 'document') {
+        // Defer doc generation: let the browser paint the rendered response first,
+        // then build the Blob off the main thread tick to avoid freezing the tab.
+        setTimeout(() => {
+          try {
+            const filename = generateWordDoc(finalText, context);
+            const notice = document.createElement('p');
+            notice.className = 'sna-download-notice';
+            notice.textContent = '📥 Downloaded: ' + filename;
+            const responseEl = document.getElementById('sna-response');
+            if (responseEl) responseEl.appendChild(notice);
+          } catch (err) {
+            console.error('[SN Assistant] Word download failed', err);
+            showError(`Could not download the Word document: ${err.message || 'Unknown error'}`);
+          }
+        }, 50);
+      }
     } else if (msg.type === 'error') {
+      clearActiveStreamState(port);
+      if (isBackgroundOnlyAction) {
+        finalizeExecutionTrace('error', msg.message || 'The update set action failed.');
+      }
       showError(msg.message);
       port.disconnect();
     }
   });
 
   port.postMessage({ action, code, question, context });
+}
+
+function getFieldValueBySuffix(suffixes) {
+  for (const suffix of suffixes) {
+    const field = findFieldBySuffix([suffix]);
+    if (!field) continue;
+
+    if (field.tagName === 'SELECT') {
+      const option = field.options[field.selectedIndex];
+      return (option?.textContent?.trim() || field.value || '').trim();
+    }
+
+    const value = field.value || field.textContent || '';
+    if (value && value.trim()) return value.trim();
+  }
+
+  return '';
+}
+
+function normalizeHeader(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const CUSTOMER_UPDATE_HEADER_ALIASES = {
+  type: ['type'],
+  payload: ['payload'],
+  targetName: ['target name', 'name'],
+  table: ['table'],
+  action: ['action', 'operation'],
+  application: ['application', 'scope'],
+  updatedBy: ['updated by'],
+  created: ['created'],
+  updated: ['updated']
+};
+
+function getHeaderValueByAliases(valueByHeader, aliases = []) {
+  for (const alias of aliases) {
+    if (valueByHeader[alias]) return valueByHeader[alias];
+  }
+
+  return '';
+}
+
+function getCellByAliases(cellByHeader, aliases = []) {
+  for (const alias of aliases) {
+    if (cellByHeader[alias]) return cellByHeader[alias];
+  }
+
+  return null;
+}
+
+function compactWhitespace(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function getCellText(cell) {
+  if (!cell) return '';
+
+  const candidates = [
+    cell.innerText,
+    cell.textContent,
+    cell.getAttribute('title'),
+    cell.getAttribute('aria-label'),
+    cell.dataset?.originalTitle,
+    cell.dataset?.title
+  ];
+
+  let best = '';
+  for (const candidate of candidates) {
+    const compact = compactWhitespace(candidate);
+    if (compact.length > best.length) {
+      best = compact;
+    }
+  }
+
+  return best;
+}
+
+function compactPayloadPreview(value, maxLength = 220) {
+  const compact = compactWhitespace(value);
+  if (compact.length <= maxLength) return compact;
+  return compact.slice(0, maxLength - 3) + '...';
+}
+
+function compactMultilinePreview(value, maxLength = 320) {
+  const compact = String(value || '').replace(/\s+/g, ' ').trim();
+  if (compact.length <= maxLength) return compact;
+  return compact.slice(0, maxLength - 3) + '...';
+}
+
+function normalizeUpdateSetDocumentationMode(value) {
+  return value === 'deep' ? 'deep' : 'list';
+}
+
+function normalizeChangeDocumentationSettings(raw = {}) {
+  const deepFetchLimit = Number(raw.deepFetchLimit);
+  const deepFetchConcurrency = Number(raw.deepFetchConcurrency);
+
+  return {
+    updateSetMode: normalizeUpdateSetDocumentationMode(raw.updateSetMode),
+    deepFetchLimit: Number.isFinite(deepFetchLimit) && deepFetchLimit > 0 ? Math.min(deepFetchLimit, 25) : 12,
+    deepFetchConcurrency: Number.isFinite(deepFetchConcurrency) && deepFetchConcurrency > 0 ? Math.min(deepFetchConcurrency, 5) : 3
+  };
+}
+
+async function loadChangeDocumentationSettings() {
+  try {
+    const stored = await chrome.storage.sync.get('changeDocumentation');
+    return normalizeChangeDocumentationSettings(stored.changeDocumentation || {});
+  } catch {
+    return normalizeChangeDocumentationSettings();
+  }
+}
+
+function findDisplayFieldBySuffix(suffixes) {
+  for (const suffix of suffixes) {
+    const selectors = [
+      `input[id*="sys_display"][id$=".${suffix}"]`,
+      `input[name*="sys_display"][name$=".${suffix}"]`,
+      `input[id*="sys_display"][id$="${suffix}"]`,
+      `input[name*="sys_display"][name$="${suffix}"]`
+    ];
+
+    for (const selector of selectors) {
+      const field = document.querySelector(selector) || querySelectorDeep(selector);
+      if (field) return field;
+    }
+  }
+
+  return null;
+}
+
+function getDisplayValueBySuffix(suffixes) {
+  const displayField = findDisplayFieldBySuffix(suffixes);
+  if (displayField) {
+    const value = (displayField.value || displayField.textContent || '').trim();
+    if (value) return value;
+  }
+
+  return getFieldValueBySuffix(suffixes);
+}
+
+function getAccessibleDocumentsForRelatedLists() {
+  const docs = [document];
+  const iframes = Array.from(document.querySelectorAll('iframe'));
+
+  for (const iframe of iframes) {
+    try {
+      const subDoc = iframe.contentDocument;
+      if (subDoc?.body) docs.push(subDoc);
+    } catch {
+      // Ignore inaccessible frames
+    }
+  }
+
+  return docs;
+}
+
+function findCustomerUpdateTables(docRef) {
+  const tables = Array.from(docRef.querySelectorAll('table'));
+
+  return tables.filter((table) => {
+    const text = normalizeHeader(table.textContent);
+    if (text.includes('sys_update_xml')) return true;
+    if (text.includes('customer updates')) return true;
+
+    const headers = Array.from(table.querySelectorAll('th')).map((th) => normalizeHeader(th.textContent));
+    const hasType = CUSTOMER_UPDATE_HEADER_ALIASES.type.some((alias) => headers.includes(alias));
+    const hasTargetName = CUSTOMER_UPDATE_HEADER_ALIASES.targetName.some((alias) => headers.includes(alias));
+    const hasAction = CUSTOMER_UPDATE_HEADER_ALIASES.action.some((alias) => headers.includes(alias));
+    return hasType && hasTargetName && hasAction;
+  });
+}
+
+function extractRowsFromCustomerUpdateTable(table) {
+  const headers = Array.from(table.querySelectorAll('th')).map((th) => normalizeHeader(th.textContent));
+  if (!headers.length) return [];
+
+  const rows = Array.from(table.querySelectorAll('tbody tr')).filter((row) => row.querySelectorAll('td').length > 0);
+  return rows.map((row) => {
+    const cells = Array.from(row.querySelectorAll('td'));
+    const valueByHeader = {};
+    const cellByHeader = {};
+
+    headers.forEach((header, index) => {
+      cellByHeader[header] = cells[index] || null;
+      valueByHeader[header] = getCellText(cells[index]);
+    });
+
+    const links = Array.from(row.querySelectorAll('a[href]'));
+    const sysIdLink = links.find((link) => /sys_id=([a-f0-9]{32})/i.test(link.href));
+    const sysIdMatch = sysIdLink?.href.match(/sys_id=([a-f0-9]{32})/i);
+    const targetNameCell = getCellByAliases(cellByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.targetName);
+    const targetNameLinkText = targetNameCell?.querySelector('a')?.innerText?.trim() || '';
+    const targetName = targetNameLinkText || getHeaderValueByAliases(valueByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.targetName);
+    const payloadPreview = compactPayloadPreview(getHeaderValueByAliases(valueByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.payload));
+    const targetTable = getHeaderValueByAliases(valueByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.table);
+    const application = getHeaderValueByAliases(valueByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.application);
+    const type = getHeaderValueByAliases(valueByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.type) || targetTable;
+
+    return {
+      sysId: sysIdMatch ? sysIdMatch[1] : '',
+      type,
+      name: targetName,
+      action: getHeaderValueByAliases(valueByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.action),
+      application,
+      targetTable,
+      targetName,
+      updatedBy: getHeaderValueByAliases(valueByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.updatedBy),
+      createdOn: getHeaderValueByAliases(valueByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.created),
+      updatedOn: getHeaderValueByAliases(valueByHeader, CUSTOMER_UPDATE_HEADER_ALIASES.updated),
+      payloadPreview,
+      payloadXml: payloadPreview,
+      source: 'update_set_form'
+    };
+  }).filter((row) => row.name || row.type || row.action);
+}
+
+function collectCustomerUpdatesFromForm() {
+  const docs = getAccessibleDocumentsForRelatedLists();
+  const updates = [];
+  let tableCount = 0;
+  let rawRowCount = 0;
+
+  for (const docRef of docs) {
+    const tables = findCustomerUpdateTables(docRef);
+    tableCount += tables.length;
+    for (const table of tables) {
+      const rows = extractRowsFromCustomerUpdateTable(table);
+      rawRowCount += rows.length;
+      updates.push(...rows);
+    }
+  }
+
+  const seen = {};
+  const deduped = updates.filter((row) => {
+    const key = `${row.sysId}|${row.type}|${row.name}|${row.action}`;
+    if (seen[key]) return false;
+    seen[key] = true;
+    return true;
+  });
+
+  return {
+    updates: deduped,
+    diagnostics: {
+      documentCount: docs.length,
+      tableCount,
+      rawRowCount,
+      dedupedCount: deduped.length,
+      collectionMode: 'list',
+      deepCandidates: 0,
+      deepFetchedCount: 0,
+      deepFailedCount: 0
+    }
+  };
+}
+
+async function collectUpdateSetData(changeDocumentationSettings = {}, onProgress = null) {
+  if (!hasUpdateSetForm()) return null;
+
+  const meta = {
+    sysId: getPageContext().sysId || '',
+    name: getFieldValueBySuffix(['name']),
+    description: getFieldValueBySuffix(['description', 'short_description']),
+    application: getDisplayValueBySuffix(['application', 'application_name', 'scope']),
+    state: getFieldValueBySuffix(['state']),
+    source: 'update_set_form'
+  };
+
+  let customerUpdateResult = collectCustomerUpdatesFromForm();
+  if (normalizeUpdateSetDocumentationMode(changeDocumentationSettings.updateSetMode) === 'deep') {
+    customerUpdateResult = await enrichCustomerUpdatesWithDeepPayload(
+      customerUpdateResult,
+      changeDocumentationSettings,
+      onProgress
+    );
+  }
+  const customerUpdates = customerUpdateResult.updates;
+
+  if (!meta.name && customerUpdates.length === 0) {
+    return null;
+  }
+
+  return {
+    meta,
+    customerUpdates,
+    diagnostics: customerUpdateResult.diagnostics,
+    userContext: '',
+    questionnaire: {}
+  };
+}
+
+async function enrichCustomerUpdatesWithDeepPayload(customerUpdateResult, changeDocumentationSettings, onProgress = null) {
+  const updates = customerUpdateResult.updates.map((update) => ({ ...update }));
+  const candidates = updates
+    .filter((update) => update.sysId)
+    .slice(0, changeDocumentationSettings.deepFetchLimit);
+
+  if (!candidates.length) {
+    return {
+      updates,
+      diagnostics: {
+        ...customerUpdateResult.diagnostics,
+        collectionMode: 'deep',
+        deepCandidates: 0,
+        deepFetchedCount: 0,
+        deepFailedCount: 0
+      }
+    };
+  }
+
+  if (typeof onProgress === 'function') {
+    onProgress({
+      phase: 'collect-deep-start',
+      label: 'Deep mode: fetching XML payloads',
+      meta: {
+        deepCandidates: candidates.length,
+        totalVisibleUpdates: updates.length
+      }
+    });
+  }
+
+  let completed = 0;
+  let deepFetchedCount = 0;
+  let deepFailedCount = 0;
+  const concurrency = changeDocumentationSettings.deepFetchConcurrency;
+
+  for (let index = 0; index < candidates.length; index += concurrency) {
+    const batch = candidates.slice(index, index + concurrency);
+
+    await Promise.all(batch.map(async (update) => {
+      try {
+        const deepDetails = await fetchAndParseCustomerUpdatePayload(update.sysId);
+        Object.assign(update, deepDetails);
+        deepFetchedCount += 1;
+      } catch (error) {
+        update.deepFetchError = error?.message || 'Unknown XML fetch error';
+        deepFailedCount += 1;
+      } finally {
+        completed += 1;
+        if (
+          typeof onProgress === 'function' &&
+          (completed === candidates.length || completed === 1 || completed % concurrency === 0)
+        ) {
+          onProgress({
+            phase: 'collect-deep-progress',
+            label: 'Deep mode: XML payload progress',
+            meta: {
+              deepCompleted: completed,
+              deepCandidates: candidates.length,
+              deepFetched: deepFetchedCount,
+              deepFailed: deepFailedCount
+            }
+          });
+        }
+      }
+    }));
+  }
+
+  return {
+    updates,
+    diagnostics: {
+      ...customerUpdateResult.diagnostics,
+      collectionMode: 'deep',
+      deepCandidates: candidates.length,
+      deepFetchedCount,
+      deepFailedCount
+    }
+  };
+}
+
+async function fetchAndParseCustomerUpdatePayload(sysId) {
+  const url = new URL('/sys_update_xml.do', window.location.origin);
+  url.searchParams.set('XML', '');
+  url.searchParams.set('sys_id', sysId);
+
+  const response = await fetch(url.toString(), {
+    credentials: 'include',
+    headers: {
+      'Accept': 'application/xml,text/xml,*/*'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  const xmlText = await response.text();
+  return parseCustomerUpdateExportXml(xmlText);
+}
+
+function parseCustomerUpdateExportXml(xmlText) {
+  const outerDoc = parseXmlDocument(xmlText);
+  if (!outerDoc) {
+    throw new Error('Could not parse exported Customer Update XML.');
+  }
+
+  const payloadXml = getFirstXmlTagText(outerDoc, ['payload']);
+  const outerType = getFirstXmlTagText(outerDoc, ['type']);
+  const outerName = getFirstXmlTagText(outerDoc, ['target_name', 'name']);
+  const outerAction = getFirstXmlTagText(outerDoc, ['action']);
+  const outerApplication = getFirstXmlTagText(outerDoc, ['application']);
+  const payloadDetails = payloadXml ? extractPayloadDetails(payloadXml) : {};
+
+  return {
+    type: outerType || payloadDetails.deepTable || '',
+    targetName: outerName || payloadDetails.deepName || '',
+    name: outerName || payloadDetails.deepName || '',
+    action: outerAction || '',
+    application: outerApplication || '',
+    payloadXml,
+    payloadPreview: compactPayloadPreview(payloadXml || ''),
+    deepPayloadFetched: true,
+    deepTable: payloadDetails.deepTable || '',
+    deepName: payloadDetails.deepName || '',
+    scriptField: payloadDetails.scriptField || '',
+    scriptPreview: payloadDetails.scriptPreview || '',
+    fieldSummary: payloadDetails.fieldSummary || []
+  };
+}
+
+function parseXmlDocument(xmlText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'application/xml');
+  if (doc.querySelector('parsererror')) {
+    return null;
+  }
+  return doc;
+}
+
+function getFirstXmlTagText(docOrElement, tagNames = []) {
+  if (!docOrElement) return '';
+
+  for (const tagName of tagNames) {
+    const node = docOrElement.getElementsByTagName(tagName)[0];
+    const value = compactWhitespace(node?.textContent || '');
+    if (value) return value;
+  }
+
+  return '';
+}
+
+function getElementChildren(node) {
+  return Array.from(node?.childNodes || []).filter((child) => child.nodeType === Node.ELEMENT_NODE);
+}
+
+function extractPayloadDetails(payloadXml) {
+  const innerDoc = parseXmlDocument(payloadXml);
+  if (!innerDoc) {
+    return {
+      deepTable: '',
+      deepName: '',
+      scriptField: '',
+      scriptPreview: '',
+      fieldSummary: []
+    };
+  }
+
+  const recordUpdate = innerDoc.getElementsByTagName('record_update')[0];
+  const recordNode = recordUpdate
+    ? getElementChildren(recordUpdate)[0] || null
+    : innerDoc.documentElement;
+  const deepTable = recordUpdate?.getAttribute('table') || recordNode?.tagName || '';
+  const deepName = getFirstXmlTagText(recordNode || innerDoc, ['name', 'short_description', 'label', 'column_label', 'element']);
+  const scriptField = findFirstPresentField(recordNode, [
+    'script',
+    'operation_script',
+    'action_script',
+    'condition',
+    'script_true',
+    'script_false'
+  ]);
+  const scriptPreview = scriptField ? compactMultilinePreview(getFirstXmlTagText(recordNode, [scriptField]), 360) : '';
+  const fieldSummary = collectPayloadFieldSummary(recordNode);
+
+  return {
+    deepTable,
+    deepName,
+    scriptField,
+    scriptPreview,
+    fieldSummary
+  };
+}
+
+function findFirstPresentField(node, fieldNames = []) {
+  for (const fieldName of fieldNames) {
+    if (getFirstXmlTagText(node, [fieldName])) {
+      return fieldName;
+    }
+  }
+
+  return '';
+}
+
+function collectPayloadFieldSummary(node) {
+  if (!node) return [];
+
+  const summaryFields = [
+    'collection',
+    'table',
+    'when',
+    'active',
+    'condition',
+    'element',
+    'column_label',
+    'reference',
+    'type',
+    'mandatory',
+    'default_value',
+    'order',
+    'duration_hours',
+    'queue'
+  ];
+
+  const result = [];
+  for (const fieldName of summaryFields) {
+    const value = getFirstXmlTagText(node, [fieldName]);
+    if (!value) continue;
+    result.push(`${fieldName}: ${compactMultilinePreview(value, 120)}`);
+    if (result.length >= 5) break;
+  }
+
+  return result;
 }
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
@@ -475,7 +1245,9 @@ function generateWordDoc(markdownText, context) {
   const scriptType = (context.scriptType || 'Script').replace(/\s+/g, '_');
   const filename   = scriptType + '_Documentation_' + date + '.doc';
 
-  const bodyHtml = renderMarkdown(markdownText);
+  const bodyHtml = context.table === 'sys_update_set'
+    ? renderWordFriendlyText(markdownText)
+    : renderMarkdown(markdownText);
 
   const html = [
     '<html xmlns:o="urn:schemas-microsoft-com:office:office"',
@@ -515,16 +1287,155 @@ function generateWordDoc(markdownText, context) {
     '</html>'
   ].join('\n');
 
-  // BOM (\ufeff) ensures Word reads the encoding correctly
+  // BOM (\ufeff) ensures Word reads the encoding correctly.
+  // Anchor must be appended to document body before .click() — required in iframe contexts.
+  // revokeObjectURL is deferred 2s to guarantee the browser starts the download first.
   const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
   a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 
   return filename;
+}
+
+function renderWordFriendlyText(text) {
+  const lines = String(text || '').split('\n');
+  const out = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const raw = lines[i] || '';
+    const line = raw.trim();
+
+    if (!line) {
+      i++;
+      continue;
+    }
+
+    if (line.startsWith('```')) {
+      i++;
+      const codeLines = [];
+      while (i < lines.length && !(lines[i] || '').trim().startsWith('```')) {
+        codeLines.push(escapeHtml(lines[i]));
+        i++;
+      }
+      i++;
+      out.push('<pre><code>' + codeLines.join('\n') + '</code></pre>');
+      continue;
+    }
+
+    if (/^---+$/.test(line)) {
+      out.push('<hr>');
+      i++;
+      continue;
+    }
+
+    if (/^>\s?/.test(line)) {
+      const quote = [];
+      while (i < lines.length && /^>\s?/.test((lines[i] || '').trim())) {
+        quote.push(renderWordFriendlyInline((lines[i] || '').trim().replace(/^>\s?/, '')));
+        i++;
+      }
+      out.push('<p><em>' + quote.join('<br>') + '</em></p>');
+      continue;
+    }
+
+    if (line.startsWith('### ')) {
+      out.push('<h3>' + renderWordFriendlyInline(line.slice(4)) + '</h3>');
+      i++;
+      continue;
+    }
+
+    if (line.startsWith('## ')) {
+      out.push('<h2>' + renderWordFriendlyInline(line.slice(3)) + '</h2>');
+      i++;
+      continue;
+    }
+
+    if (line.startsWith('# ')) {
+      out.push('<h1>' + renderWordFriendlyInline(line.slice(2)) + '</h1>');
+      i++;
+      continue;
+    }
+
+    if (/^[-*] /.test(line) || /^\d+\. /.test(line)) {
+      const items = [];
+      while (i < lines.length) {
+        const itemLine = (lines[i] || '').trim();
+        if (!itemLine || (!/^[-*] /.test(itemLine) && !/^\d+\. /.test(itemLine))) break;
+        items.push(renderWordFriendlyInline(itemLine.replace(/^[-*] /, '').replace(/^\d+\. /, '')));
+        i++;
+      }
+      out.push('<ul>' + items.map((item) => '<li>' + item + '</li>').join('') + '</ul>');
+      continue;
+    }
+
+    if (line.includes('|')) {
+      const rows = [];
+      while (i < lines.length && (lines[i] || '').includes('|')) {
+        rows.push((lines[i] || '').trim());
+        i++;
+      }
+
+      let isHeader = true;
+      const tableRows = [];
+      for (const row of rows) {
+        if (/^\|[\s\-|:]+\|$/.test(row)) {
+          isHeader = false;
+          continue;
+        }
+
+        const cells = row.split('|').slice(1, -1).map((cell) => renderWordFriendlyInline(cell.trim()));
+        const tag = isHeader ? 'th' : 'td';
+        tableRows.push('<tr>' + cells.map((cell) => `<${tag}>${cell}</${tag}>`).join('') + '</tr>');
+      }
+
+      if (tableRows.length) {
+        out.push('<table>' + tableRows.join('') + '</table>');
+        continue;
+      }
+    }
+
+    const paragraph = [];
+    while (i < lines.length) {
+      const paragraphLine = (lines[i] || '').trim();
+      if (
+        !paragraphLine ||
+        paragraphLine.startsWith('#') ||
+        paragraphLine.startsWith('```') ||
+        /^>\s?/.test(paragraphLine) ||
+        /^[-*] /.test(paragraphLine) ||
+        /^\d+\. /.test(paragraphLine) ||
+        /^---+$/.test(paragraphLine) ||
+        paragraphLine.includes('|')
+      ) {
+        break;
+      }
+      paragraph.push(renderWordFriendlyInline(paragraphLine));
+      i++;
+    }
+
+    if (paragraph.length) {
+      out.push('<p>' + paragraph.join('<br>') + '</p>');
+    } else {
+      i++;
+    }
+  }
+
+  return out.join('');
+}
+
+function renderWordFriendlyInline(text) {
+  return escapeHtml(text || '')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
 }
 
 // ─── UI helpers ───────────────────────────────────────────────────────────────
@@ -538,6 +1449,314 @@ function showLoading(label) {
   document.getElementById('sna-copy').style.display = 'none';
 }
 
+function updateLoadingLabel(label) {
+  const loadingEl = document.getElementById('sna-loading');
+  if (!loadingEl) return;
+  loadingEl.style.display = 'flex';
+  const labelEl = loadingEl.querySelector('span');
+  if (labelEl) labelEl.textContent = label || 'Analyzing...';
+}
+
+function setSidebarBusy(isBusy) {
+  const sidebar = document.getElementById(SN_ASSISTANT_ID);
+  if (!sidebar) return;
+
+  sidebar.dataset.busy = isBusy ? 'true' : 'false';
+
+  const controls = sidebar.querySelectorAll('.sna-action-btn, #sna-send-question, #sna-question-input');
+  controls.forEach((control) => {
+    control.disabled = isBusy;
+  });
+}
+
+function isSidebarBusy() {
+  return document.getElementById(SN_ASSISTANT_ID)?.dataset.busy === 'true';
+}
+
+function clearActiveStreamState(port) {
+  if (activeStreamPort && port && activeStreamPort !== port) return;
+
+  clearActiveStreamTimer();
+  activeStreamPort = null;
+  activeStreamAction = null;
+  setSidebarBusy(false);
+}
+
+function cancelActiveStream() {
+  if (activeStreamPort) {
+    try {
+      activeStreamPort.disconnect();
+    } catch {
+      // Ignore disconnect race
+    }
+  }
+
+  clearActiveStreamState();
+}
+
+function trackActiveStream(port, action) {
+  activeStreamPort = port;
+  activeStreamAction = action;
+  refreshActiveStreamTimeout(port, action);
+}
+
+function clearActiveStreamTimer() {
+  if (activeStreamTimer) {
+    clearTimeout(activeStreamTimer);
+    activeStreamTimer = null;
+  }
+}
+
+function refreshActiveStreamTimeout(port, action = activeStreamAction) {
+  if (activeStreamPort && port && activeStreamPort !== port) return;
+
+  clearActiveStreamTimer();
+
+  activeStreamTimer = setTimeout(() => {
+    if (activeStreamPort !== port) return;
+
+    try {
+      port.disconnect();
+    } catch {
+      // Ignore disconnect race
+    }
+
+    clearActiveStreamState(port);
+    if (shouldShowExecutionTrace(action)) {
+      finalizeExecutionTrace('timeout', `No progress detected for ${Math.round(getActionTimeoutMs(action) / 1000)} seconds.`, {
+        timeoutSeconds: Math.round(getActionTimeoutMs(action) / 1000),
+        lastPhase: currentExecutionTrace?.lastPhase || 'unknown'
+      });
+    }
+    showError(`The ${action} action stopped making progress and was cancelled.`);
+  }, getActionTimeoutMs(action));
+}
+
+function getActionTimeoutMs(action) {
+  return ACTION_TIMEOUTS_MS[action] || ACTION_TIMEOUT_MS;
+}
+
+function showDownloadSuccess(filename, message) {
+  document.getElementById('sna-loading').style.display = 'none';
+  const responseEl = document.getElementById('sna-response');
+  responseEl.style.display = 'block';
+  responseEl.classList.add('sna-response--rendered');
+  responseEl.innerHTML = `
+    <p><strong>${escapeHtml(message || 'Document downloaded successfully.')}</strong></p>
+    <p>${escapeHtml(filename)}</p>
+  `;
+  document.getElementById('sna-copy').style.display = 'none';
+}
+
+function shouldShowExecutionTrace(action) {
+  return action === 'documentUpdateSet';
+}
+
+function beginExecutionTrace(action, seed = {}) {
+  if (!shouldShowExecutionTrace(action)) {
+    clearExecutionTrace();
+    return;
+  }
+
+  currentExecutionTrace = {
+    action,
+    startedAt: Date.now(),
+    status: 'running',
+    summary: seed.summary || '',
+    lastPhase: 'start',
+    steps: []
+  };
+  renderExecutionTrace();
+}
+
+function addExecutionTraceStep(step = {}) {
+  if (!currentExecutionTrace || !shouldShowExecutionTrace(currentExecutionTrace.action)) return;
+
+  currentExecutionTrace.lastPhase = step.phase || currentExecutionTrace.lastPhase || 'info';
+  currentExecutionTrace.steps.push({
+    phase: step.phase || 'info',
+    label: step.label || 'Trace update',
+    detail: step.detail || '',
+    meta: step.meta || null,
+    elapsedMs: typeof step.elapsedMs === 'number'
+      ? step.elapsedMs
+      : (Date.now() - currentExecutionTrace.startedAt)
+  });
+
+  renderExecutionTrace();
+}
+
+function finalizeExecutionTrace(status, summary = '', meta = null) {
+  if (!currentExecutionTrace || !shouldShowExecutionTrace(currentExecutionTrace.action)) return;
+
+  currentExecutionTrace.status = status || 'done';
+  if (summary) currentExecutionTrace.summary = summary;
+  if (meta) {
+    addExecutionTraceStep({
+      phase: status || 'done',
+      label: summary || 'Trace finished',
+      meta
+    });
+  } else {
+    renderExecutionTrace();
+  }
+}
+
+function clearExecutionTrace() {
+  currentExecutionTrace = null;
+  const el = document.getElementById('sna-execution-trace');
+  if (!el) return;
+  el.style.display = 'none';
+  el.innerHTML = '';
+}
+
+function handleExecutionProgress(progress = {}) {
+  if (!shouldShowExecutionTrace('documentUpdateSet')) return;
+
+  if (progress.message) {
+    updateLoadingLabel(progress.message);
+  }
+
+  addExecutionTraceStep({
+    phase: progress.phase || 'progress',
+    label: progress.label || progress.message || 'Progress update',
+    detail: progress.detail || '',
+    meta: progress.meta || null,
+    elapsedMs: progress.elapsedMs
+  });
+}
+
+function renderExecutionTrace() {
+  const el = document.getElementById('sna-execution-trace');
+  if (!el) return;
+
+  if (!currentExecutionTrace || !shouldShowExecutionTrace(currentExecutionTrace.action)) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+
+  const status = currentExecutionTrace.status || 'running';
+  const statusLabels = {
+    running: 'Running',
+    done: 'Done',
+    error: 'Error',
+    timeout: 'Timeout'
+  };
+  const metricsHtml = (currentExecutionTrace.steps || [])
+    .slice(-8)
+    .map((step) => {
+      const metaPairs = step.meta
+        ? Object.entries(step.meta)
+            .filter(([, value]) => value !== null && value !== undefined && value !== '')
+            .map(([key, value]) => `<span>${escapeHtml(key)}: ${escapeHtml(String(value))}</span>`)
+            .join('')
+        : '';
+
+      return `
+        <li class="sna-trace-item">
+          <div class="sna-trace-row">
+            <span class="sna-trace-time">${escapeHtml(formatTraceElapsed(step.elapsedMs))}</span>
+            <span class="sna-trace-label">${escapeHtml(step.label)}</span>
+          </div>
+          ${step.detail ? `<p class="sna-trace-detail">${escapeHtml(step.detail)}</p>` : ''}
+          ${metaPairs ? `<div class="sna-trace-meta">${metaPairs}</div>` : ''}
+        </li>
+      `;
+    }).join('');
+
+  el.innerHTML = `
+    <details class="sna-trace-card" open>
+      <summary class="sna-trace-summary">
+        <span class="sna-trace-title">Execution Trace</span>
+        <span class="sna-trace-badge sna-trace-badge--${escapeHtml(status)}">${escapeHtml(statusLabels[status] || status)}</span>
+      </summary>
+      ${currentExecutionTrace.summary ? `<p class="sna-trace-detail">${escapeHtml(currentExecutionTrace.summary)}</p>` : ''}
+      <ol class="sna-trace-list">
+        ${metricsHtml || '<li class="sna-trace-item"><span class="sna-trace-label">Waiting for progress updates...</span></li>'}
+      </ol>
+    </details>
+  `;
+  el.style.display = 'block';
+}
+
+function formatTraceElapsed(ms) {
+  if (!Number.isFinite(ms)) return '0.0s';
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function clearGrounding() {
+  const el = document.getElementById('sna-grounding');
+  if (!el) return;
+  el.style.display = 'none';
+  el.innerHTML = '';
+}
+
+function renderGrounding(retrieval) {
+  const el = document.getElementById('sna-grounding');
+  if (!el) return;
+
+  const hasHits = retrieval?.selectedChunks?.length > 0;
+  const shouldShow = retrieval?.includeTraceInPanel && (hasHits || retrieval?.trace?.error);
+
+  if (!shouldShow) {
+    clearGrounding();
+    return;
+  }
+
+  if (retrieval?.trace?.error && !hasHits) {
+    el.innerHTML = `
+      <div class="sna-grounding-card">
+        <div class="sna-grounding-summary">
+          <span class="sna-grounding-title">Grounding</span>
+          <span class="sna-grounding-badge sna-grounding-badge--warn">Unavailable</span>
+        </div>
+        <p class="sna-grounding-note">${escapeHtml(retrieval.trace.error)}</p>
+      </div>
+    `;
+    el.style.display = 'block';
+    return;
+  }
+
+  const sourceNames = Array.from(new Set((retrieval.selectedChunks || []).map((chunk) => chunk.sourceName))).join(', ');
+  const strategy = escapeHtml(retrieval.strategy || retrieval.trace?.strategy || 'servicenow-hybrid-v1');
+  const itemsHtml = (retrieval.selectedChunks || []).map((chunk) => `
+    <li class="sna-grounding-item">
+      <a class="sna-grounding-link" href="${escapeHtml(chunk.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(chunk.title)}</a>
+      <div class="sna-grounding-meta">
+        <span>${escapeHtml(chunk.category || 'general')}</span>
+        ${chunk.heading ? `<span>${escapeHtml(chunk.heading)}</span>` : ''}
+        <span>score ${escapeHtml(chunk.score)}</span>
+      </div>
+      ${chunk.reasons?.length ? `<p class="sna-grounding-note">${escapeHtml(chunk.reasons.join(' | '))}</p>` : ''}
+      <p class="sna-grounding-excerpt">${escapeHtml(chunk.excerpt)}</p>
+    </li>
+  `).join('');
+
+  el.innerHTML = `
+    <details class="sna-grounding-card">
+      <summary class="sna-grounding-summary">
+        <span class="sna-grounding-title">Grounding</span>
+        <span class="sna-grounding-badge">${escapeHtml(retrieval.selectedChunks.length)} refs</span>
+      </summary>
+      <p class="sna-grounding-note">Using ${escapeHtml(sourceNames)} with ${strategy} retrieval.</p>
+      <ul class="sna-grounding-list">
+        ${itemsHtml}
+      </ul>
+    </details>
+  `;
+  el.style.display = 'block';
+}
+
 function showResponse(text) {
   document.getElementById('sna-loading').style.display = 'none';
   const el = document.getElementById('sna-response');
@@ -547,9 +1766,10 @@ function showResponse(text) {
   document.getElementById('sna-copy').style.display = 'inline-block';
 }
 
-// Called on each chunk — keeps raw text so streaming feels responsive.
-function updateResponse(text) {
-  document.getElementById('sna-response').textContent = text;
+// Called on each chunk — appends only the new text to avoid O(n^2) DOM rewrites.
+function appendResponseChunk(chunk) {
+  const el = document.getElementById('sna-response');
+  el.textContent += chunk;
   const area = document.getElementById('sna-response-area');
   area.scrollTop = area.scrollHeight;
 }
@@ -558,7 +1778,15 @@ function updateResponse(text) {
 function finalizeResponse(text) {
   const el = document.getElementById('sna-response');
   el.classList.add('sna-response--rendered');
-  el.innerHTML = renderMarkdown(text);
+
+  // Long grounded explanations can become expensive to fully markdown-render.
+  // Fall back to preformatted plain text to keep the tab responsive.
+  if ((text || '').length > MAX_MARKDOWN_RENDER_CHARS) {
+    el.innerHTML = '<pre><code>' + escapeHtml(text) + '</code></pre>';
+  } else {
+    el.innerHTML = renderMarkdown(text);
+  }
+
   const area = document.getElementById('sna-response-area');
   area.scrollTop = area.scrollHeight;
 }
@@ -716,6 +1944,7 @@ function createTriggerButton() {
 function toggleSidebar() {
   const existing = document.getElementById(SN_ASSISTANT_ID);
   if (existing) {
+    cancelActiveStream();
     existing.remove();
     document.getElementById(SN_TRIGGER_ID)?.classList.remove('active');
   } else {
@@ -754,7 +1983,11 @@ async function init() {
   let attempts = 0;
   const interval = setInterval(() => {
     attempts++;
-    if (hasCodeEditor()) {
+    if (window === window.top && document.getElementById('gsft_main')) {
+      clearInterval(interval);
+      return;
+    }
+    if (hasRelevantAssistantContext()) {
       clearInterval(interval);
       createTriggerButton();
     }
@@ -762,10 +1995,14 @@ async function init() {
   }, 500);
 }
 
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === 'TOGGLE_SIDEBAR') {
-    toggleSidebar();
-  }
-});
+try {
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === 'TOGGLE_SIDEBAR') {
+      toggleSidebar();
+    }
+  });
+} catch (error) {
+  console.warn('[SN Assistant] Runtime listener unavailable', error);
+}
 
 init();

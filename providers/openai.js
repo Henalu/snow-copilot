@@ -1,6 +1,8 @@
 // providers/openai.js — OpenAI adapter (also compatible with OpenAI-format endpoints)
 
 import { buildPrompt } from './prompts.js';
+import { getMaxTokensForAction } from './outputBudget.js';
+import { readSseEventData } from './streaming.js';
 
 export const openaiProvider = {
   id: 'openai',
@@ -9,10 +11,11 @@ export const openaiProvider = {
     return !!(config.enabled && config.apiKey?.trim());
   },
 
-  async *sendPrompt({ action, code, question, context, config, model }) {
-    const prompt = buildPrompt(action, code, context, question);
+  async *sendPrompt({ action, code, question, context, config, model, prompt }) {
+    const resolvedPrompt = prompt || buildPrompt(action, code, context, question);
     const modelId = model || config.model || 'gpt-4o-mini';
     const baseUrl = normalizeBaseUrl(config.baseUrl, 'https://api.openai.com/v1');
+    const maxTokens = getMaxTokensForAction(action, 2048);
 
     const resp = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
@@ -22,10 +25,10 @@ export const openaiProvider = {
       },
       body: JSON.stringify({
         model: modelId,
-        max_tokens: 2048,
+        max_tokens: maxTokens,
         messages: [
-          { role: 'system', content: prompt.system },
-          { role: 'user',   content: prompt.user }
+          { role: 'system', content: resolvedPrompt.system },
+          { role: 'user',   content: resolvedPrompt.user }
         ],
         stream: true
       })
@@ -74,22 +77,14 @@ function normalizeBaseUrl(url, fallback) {
 }
 
 export async function* parseOpenAIStream(body) {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split('\n')) {
-      if (!line.startsWith('data: ')) continue;
-      const data = line.slice(6).trim();
-      if (data === '[DONE]' || !data) continue;
-      try {
-        const parsed = JSON.parse(data);
-        const text = parsed.choices?.[0]?.delta?.content;
-        if (text) yield text;
-      } catch { /* incomplete chunk */ }
+  for await (const data of readSseEventData(body)) {
+    if (data === '[DONE]' || !data) continue;
+    try {
+      const parsed = JSON.parse(data);
+      const text = parsed.choices?.[0]?.delta?.content;
+      if (text) yield text;
+    } catch {
+      // Ignore malformed partial events.
     }
   }
 }

@@ -1,133 +1,94 @@
-# FAQ & Troubleshooting
+# FAQ and Troubleshooting
 
----
+## FAQ
 
-## Frequently Asked Questions
+### Which provider should I use?
 
-### Which AI provider should I use?
+General recommendation:
 
-| Use case | Recommended |
-|---|---|
-| Best overall quality | Anthropic Claude Sonnet 4.6 |
-| Fastest responses | Claude Haiku 4.5 or GPT-4o Mini |
-| No API key / free | Local LLM with Ollama |
-| Multiple models with one key | OpenRouter |
-| Keep keys server-side | Custom Endpoint (your own Vercel proxy) |
+- best overall quality: Anthropic Claude Sonnet
+- fastest inexpensive usage: Claude Haiku or GPT-4o Mini
+- many models with one key: OpenRouter
+- no cloud API key: Local LLM
+- server-side control: Custom Endpoint
 
-The **Smart Defaults** feature in Settings → Smart Defaults can recommend the best provider per action based on your enabled providers.
+### Is RAG supposed to be faster?
 
----
+Not usually. RAG is primarily about grounding and answer quality, not raw latency.
 
-### Is my API key safe?
+It can add extra retrieval work and more prompt context, so it is usually a little slower. That is why the extension enables RAG selectively, not for every action.
 
-Yes. API keys are stored in `chrome.storage.sync`, which is local to your Chrome browser profile. They are only sent directly to the AI provider you configured (Anthropic, OpenAI, etc.) — SN Assistant does not have a backend that receives your keys.
+### Why is `Document UpdateSet` not using RAG by default?
 
-The only exception is if you use **Custom Endpoint**, in which case your own server receives the requests.
+Because the Update Set itself is already the main source of truth. For this action, speed and reliability matter more than adding secondary retrieval context.
 
----
+### What is the difference between `List-first` and `Deep`?
 
-### Which ServiceNow record types are supported?
+- `List-first`: faster, uses visible metadata from the Update Set and related list
+- `Deep`: slower, tries to read more technical detail from `sys_update_xml`
 
-Business Rules, Script Includes, Client Scripts, Fix Scripts, UI Actions, Scripted REST Resources, and Scheduled Scripts are verified. UI Scripts, Transform Scripts, and Background Scripts are in progress.
+### Can I change the language of the output?
 
-If a record type isn't detected, see [The trigger button doesn't appear](#the-trigger-button-does-not-appear).
+Yes. The preferred response language can be set in Options. Current choices are English and Spanish.
 
----
+### Does the extension support Update Sets now?
 
-### Does it work with ServiceNow Polaris (Next Experience)?
-
-Yes. SN Assistant supports both Classic UI and Polaris. The detection logic automatically handles the different DOM structures.
-
----
-
-### Can I use it on multiple ServiceNow instances?
-
-Yes. The extension activates on any domain that matches `*.service-now.com`. Your settings apply across all instances.
-
----
-
-### Why does the Document action download a `.doc` file instead of `.docx`?
-
-The `.doc` format is generated as an HTML document with Word-compatible markup — no external libraries required. Microsoft Word and Google Docs open it correctly. If you need `.docx` format, open the `.doc` in Word and save as `.docx`.
-
----
+Yes. `Document UpdateSet` is available when a `sys_update_set` form is detected.
 
 ## Troubleshooting
 
 ### The trigger button does not appear
 
-**Step 1:** Open DevTools (F12). In ServiceNow, you may need to switch the DevTools context from `top` to `gsft_main` (dropdown in the Console tab header).
+1. Open DevTools
+2. Switch console context to `gsft_main` if needed
+3. Run:
 
-**Step 2:** Run this in the console to check detection:
 ```js
 detectRecordType()
 ```
-If `isKnown: false` is returned, the record type is not yet in the extension's map. [Open a feature request](https://github.com/Henalu/snow-copilot/issues/new?template=feature_request.yml) to add support for it.
 
-**Step 3:** Run:
+4. Then run:
+
 ```js
 detectScriptEditor()
 ```
-If this returns `null`, the Monaco editor was not detected. Try listing visible textareas:
-```js
-Array.from(document.querySelectorAll('textarea')).map(t => t.id)
-```
 
-**Step 4:** Make sure you are on the script editor form, not a list view.
+If you are on an Update Set form instead of a script form, the relevant detection is the Update Set context, not Monaco editor detection.
 
----
+### The extension shows `Extension context invalidated`
 
-### The trigger appears but nothing happens when I click it
+This usually means the extension was reloaded but the ServiceNow tab was not refreshed. Reload the extension in `chrome://extensions`, then refresh the ServiceNow tab completely.
 
-- Check the service worker console: go to `chrome://extensions` → SN Assistant → **Service Worker** → Inspect → Console
-- Look for errors related to the AI provider (network errors, invalid API key, etc.)
-- Verify your API key in Options → the provider should show **Configured** in green
+### `Document UpdateSet` takes too long
 
----
+Check the execution trace inside the panel.
 
-### I get a "CSP error" or "Refused to execute inline script" in the console
+The most useful checkpoints are:
 
-These errors are from **ServiceNow itself**, not from SN Assistant. ServiceNow uses inline event handlers internally which violate its own CSP — this is expected and does not affect the extension. Ignore errors that reference ServiceNow URLs.
+- `Captured Update Set data`
+- `Prompt prepared`
+- `Model started responding`
+- `Generation in progress`
+- `Preparing Word download`
 
----
+If the trace stops early, the issue is usually capture or prompt preparation. If it stops after model start, the issue is usually generation time or output size.
 
-### The AI response looks like raw markdown (asterisks, hashes)
+### `Document UpdateSet` output looks generic
 
-This should not happen with v0.4+. If you see raw markdown:
-- Reload the extension: `chrome://extensions` → SN Assistant → refresh icon (↻)
-- Hard-reload the ServiceNow page (Ctrl+Shift+R)
+Try these steps:
 
----
+1. Make sure useful columns are visible in the Customer Updates related list
+2. Add business or technical context in the sidebar textarea
+3. Switch to `Deep` mode for richer technical evidence
 
-### The Anthropic provider returns a 400 error: "direct browser access not allowed"
+### The answer looks like raw markdown
 
-This means the `anthropic-dangerous-direct-browser-access: true` header is not being sent. This would indicate an older version of the extension. Update to the latest version.
+Reload the extension and hard-refresh the page. Recent builds render long outputs more defensively, but a stale content script can still show older behavior.
 
----
+### Anthropic returns a direct browser access error
 
-### The panel appears but stays in the wrong position after dragging
+Update to the latest build. The provider adapter must send the required direct browser access header.
 
-Click the **⊞ button** in the panel header to reset the panel to its original position and size.
+### The service worker shows no useful logs
 
----
-
-### Local LLM (Ollama) doesn't connect
-
-1. Make sure Ollama is running: `ollama serve`
-2. Verify the model is pulled: `ollama list`
-3. Test the endpoint manually: `curl http://localhost:11434/api/tags`
-4. Chrome extensions cannot reach `localhost` in some configurations — try `http://127.0.0.1:11434` as the Base URL instead
-
----
-
-### My settings disappeared after updating the extension
-
-This can happen if the extension ID changes (e.g. after removing and re-adding in developer mode). Settings are tied to the extension ID in `chrome.storage.sync`.
-
-If you previously exported a backup (Options → Data → Export settings), you can restore it with Import settings.
-
----
-
-## Still stuck?
-
-[Open a bug report](https://github.com/Henalu/snow-copilot/issues/new?template=bug_report.yml) with as much detail as possible — especially the console output from DevTools and the service worker inspector.
+Use the in-panel execution trace first for Update Set documentation. It is often more useful than the browser console for long actions.

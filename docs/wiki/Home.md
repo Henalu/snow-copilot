@@ -1,49 +1,46 @@
-# SN Assistant ⚡ — Documentation
+# SN Assistant Documentation
 
-AI copilot for ServiceNow developers. Explain, comment, refactor, and document scripts directly from your browser.
+SN Assistant is an AI copilot for ServiceNow developers. It can work on script forms and Update Sets directly inside the browser.
+
+## Quick start
+
+1. Install the extension
+2. Configure at least one AI provider
+3. Choose a preferred response language if needed
+4. Optionally enable and tune RAG
+5. Open a supported ServiceNow context
+6. Launch the assistant from the floating trigger button
+
+## Main capabilities
+
+- Explain scripts
+- Comment scripts
+- Refactor scripts
+- Ask free-form questions about scripts
+- Generate script documentation as a Word document
+- Generate Update Set documentation as a Word document
+- Run Update Set documentation in `List-first` or `Deep` mode
 
 ## Pages
 
-- **[Installation](Installation)** — How to install the extension (Chrome Web Store or developer mode)
-- **[Configuration](Configuration)** — How to set up each AI provider
-- **[Actions](Actions)** — What each action does and when to use it
-- **[FAQ & Troubleshooting](FAQ-and-Troubleshooting)** — Common issues and how to fix them
+- **[Installation](Installation)** - installation and local reload workflow
+- **[Configuration](Configuration)** - providers, language, RAG, and Update Set settings
+- **[Actions](Actions)** - what each action does and when to use it
+- **[FAQ & Troubleshooting](FAQ-and-Troubleshooting)** - common issues and debugging tips
 
----
+## Supported contexts
 
-## Quick Start
+| Context | Table | Status |
+|---|---|---|
+| Business Rules | `sys_script` | Verified |
+| Script Includes | `sys_script_include` | Verified |
+| Client Scripts | `sys_script_client` | Verified |
+| Fix Scripts | `sys_script_fix` | Verified |
+| UI Actions | `sys_ui_action` | Verified |
+| Scripted REST Resources | `sys_ws_operation` | Verified |
+| Scheduled Scripts | `sysauto_script` | Verified |
+| Update Sets | `sys_update_set` | Verified |
 
-1. Install the extension (see [Installation](Installation))
-2. Open the extension Options and enable at least one AI provider
-3. Navigate to any ServiceNow script editor
-4. Click the ⚡ trigger button that appears on the right edge of the screen
-5. Choose an action — Explain, Comment, Refactor, Ask, or Document
+## Supported providers
 
----
-
-## Supported Record Types
-
-| Record type | Table |
-|---|---|
-| Business Rules | `sys_script` |
-| Script Includes | `sys_script_include` |
-| Client Scripts | `sys_script_client` |
-| Fix Scripts | `sys_script_fix` |
-| UI Actions | `sys_ui_action` |
-| Scripted REST Resources | `sys_ws_operation` |
-| Scheduled Scripts | `sysauto_script` |
-
----
-
-## Supported AI Providers
-
-Anthropic Claude · OpenAI · Google Gemini · OpenRouter · Custom Endpoint · Local LLM (Ollama)
-
-See [Configuration](Configuration) for setup instructions for each provider.
-
----
-
-## Feedback
-
-- [Report a bug](https://github.com/Henalu/snow-copilot/issues/new?template=bug_report.yml)
-- [Request a feature](https://github.com/Henalu/snow-copilot/issues/new?template=feature_request.yml)
+Anthropic Claude, OpenAI, Google Gemini, OpenRouter, Custom Endpoint, and Local LLM.

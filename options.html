@@ -57,6 +57,15 @@
       margin-bottom: 6px;
     }
     .hint { font-size: 11px; color: #7b82a8; margin-top: 4px; }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #cfd8ff;
+      background: rgba(108,139,255,0.08);
+      border: 1px solid rgba(108,139,255,0.16);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
 
     input[type="url"],
     input[type="text"],
@@ -397,6 +406,173 @@
           </label>
         </div>
       </div>
+      <div class="field">
+        <label for="preferredLanguage">Preferred response language</label>
+        <select id="preferredLanguage">
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+        </select>
+        <p class="hint">Use this language for explanations, answers, refactors, comments, and generated documentation. Code stays unchanged.</p>
+      </div>
+      <div class="field">
+        <label for="updateSetMode">Update Set documentation mode</label>
+        <select id="updateSetMode">
+          <option value="list">Fast (List-first)</option>
+          <option value="deep">Deep (XML-aware)</option>
+        </select>
+        <p class="hint">Deep mode tries to read each <code>sys_update_xml</code> payload for richer technical evidence. It is slower, but produces more grounded update set documentation.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ServiceNow RAG</div>
+      <p class="section-desc">Ground responses with a bundled knowledge base built from Breaking Trail articles. This keeps the assistant closer to real ServiceNow patterns instead of generic code suggestions.</p>
+
+      <div class="field">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Enable contextual grounding</strong>
+            <span>Retrieve relevant ServiceNow knowledge before sending the prompt to your model</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="ragEnabled" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="field">
+        <label>Grounding by action</label>
+        <p class="hint">Use RAG only where it brings clear quality gains. Faster flows usually come from keeping grounding focused on Ask and Explain.</p>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Explain</strong>
+            <span>Ground code explanations with ServiceNow implementation context</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="ragAction-explain" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Ask</strong>
+            <span>Use Breaking Trail knowledge for direct technical questions</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="ragAction-ask" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Refactor</strong>
+            <span>Enable grounding for refactors when you prefer safer but slightly slower outputs</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="ragAction-refactor" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Comment</strong>
+            <span>Usually unnecessary for speed-first workflows</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="ragAction-comment" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Document</strong>
+            <span>Keep off unless you specifically want grounded documentation at the cost of latency</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="ragAction-document" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p class="hint">Update Set documentation currently bypasses RAG automatically to keep generation responsive.</p>
+      </div>
+
+      <div class="field">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Breaking Trail</strong>
+            <span>Use curated Breaking Trail implementation articles as the first RAG source</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="ragSource-breakingTrail" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Retrieved chunks</label>
+        <select id="ragMaxChunks">
+          <option value="2">2 chunks</option>
+          <option value="3" selected>3 chunks</option>
+          <option value="4">4 chunks</option>
+          <option value="5">5 chunks</option>
+          <option value="6">6 chunks</option>
+        </select>
+        <p class="hint">Maximum number of knowledge snippets injected into the final prompt.</p>
+      </div>
+
+      <div class="field">
+        <label>Chunks per article</label>
+        <select id="ragMaxChunksPerDocument">
+          <option value="1">1 chunk</option>
+          <option value="2" selected>2 chunks</option>
+          <option value="3">3 chunks</option>
+        </select>
+        <p class="hint">Keeps retrieval diverse so one article does not dominate the answer.</p>
+      </div>
+
+      <div class="field">
+        <label>Context budget</label>
+        <select id="ragMaxContextChars">
+          <option value="2400">2.4k chars</option>
+          <option value="3200" selected>3.2k chars</option>
+          <option value="4200">4.2k chars</option>
+          <option value="5200">5.2k chars</option>
+          <option value="6500">6.5k chars</option>
+        </select>
+        <p class="hint">Maximum retrieved context injected into the prompt before generation.</p>
+      </div>
+
+      <div class="field">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Show grounding trace in panel</strong>
+            <span>Display which articles and chunks were used after each response</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="ragIncludeTrace" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Debug retrieval logs</strong>
+            <span>Write retrieval decisions to the service worker console for troubleshooting</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="ragDebug" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <p class="hint">Current strategy: ServiceNow hybrid v1 (keywords + artifact, scope, and API boosts). Refresh the bundled Breaking Trail index with <code>npm run rag:build</code>.</p>
     </div>
 
     <!-- ── AI Providers ───────────────────────────────────────────────────── -->

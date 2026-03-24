@@ -4,6 +4,7 @@
 // Most local LLM servers (LM Studio, etc.) support the same Ollama format.
 
 import { buildPrompt } from './prompts.js';
+import { readNdjsonLines } from './streaming.js';
 
 export const localLlmProvider = {
   id: 'localLlm',
@@ -12,8 +13,8 @@ export const localLlmProvider = {
     return !!(config.enabled && config.baseUrl?.trim() && config.model?.trim());
   },
 
-  async *sendPrompt({ action, code, question, context, config, model }) {
-    const prompt = buildPrompt(action, code, context, question);
+  async *sendPrompt({ action, code, question, context, config, model, prompt }) {
+    const resolvedPrompt = prompt || buildPrompt(action, code, context, question);
     const baseUrl = normalizeBaseUrl(config.baseUrl);
     const modelId = model || config.model;
 
@@ -23,8 +24,8 @@ export const localLlmProvider = {
       body: JSON.stringify({
         model: modelId,
         messages: [
-          { role: 'system', content: prompt.system },
-          { role: 'user',   content: prompt.user }
+          { role: 'system', content: resolvedPrompt.system },
+          { role: 'user',   content: resolvedPrompt.user }
         ],
         stream: true
       })
@@ -55,21 +56,14 @@ function normalizeBaseUrl(raw) {
 }
 
 async function* parseOllamaStream(body) {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split('\n')) {
-      if (!line.trim()) continue;
-      try {
-        const parsed = JSON.parse(line);
-        const text = parsed.message?.content;
-        if (text) yield text;
-        if (parsed.done) return;
-      } catch { /* incomplete line */ }
+  for await (const line of readNdjsonLines(body)) {
+    try {
+      const parsed = JSON.parse(line);
+      const text = parsed.message?.content;
+      if (text) yield text;
+      if (parsed.done) return;
+    } catch {
+      // Ignore malformed partial lines.
     }
   }
 }

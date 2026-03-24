@@ -1,6 +1,8 @@
 // providers/anthropic.js — Anthropic Claude adapter
 
 import { buildPrompt } from './prompts.js';
+import { getMaxTokensForAction } from './outputBudget.js';
+import { readSseEventData } from './streaming.js';
 
 export const anthropicProvider = {
   id: 'anthropic',
@@ -13,9 +15,10 @@ export const anthropicProvider = {
    * Async generator — yields text chunks as they stream from the API.
    * Caller: for await (const chunk of provider.sendPrompt(...))
    */
-  async *sendPrompt({ action, code, question, context, config, model }) {
-    const prompt = buildPrompt(action, code, context, question);
+  async *sendPrompt({ action, code, question, context, config, model, prompt }) {
+    const resolvedPrompt = prompt || buildPrompt(action, code, context, question);
     const modelId = model || config.model || 'claude-sonnet-4-6';
+    const maxTokens = getMaxTokensForAction(action, 2048);
 
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -28,9 +31,9 @@ export const anthropicProvider = {
       },
       body: JSON.stringify({
         model: modelId,
-        max_tokens: 2048,
-        system: prompt.system,
-        messages: [{ role: 'user', content: prompt.user }],
+        max_tokens: maxTokens,
+        system: resolvedPrompt.system,
+        messages: [{ role: 'user', content: resolvedPrompt.user }],
         stream: true
       })
     });
@@ -75,23 +78,15 @@ export const anthropicProvider = {
 };
 
 async function* parseAnthropicStream(body) {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split('\n')) {
-      if (!line.startsWith('data: ')) continue;
-      const data = line.slice(6).trim();
-      if (!data) continue;
-      try {
-        const parsed = JSON.parse(data);
-        if (parsed.type === 'content_block_delta' && parsed.delta?.type === 'text_delta') {
-          yield parsed.delta.text;
-        }
-      } catch { /* incomplete JSON chunk — ignore */ }
+  for await (const data of readSseEventData(body)) {
+    if (!data) continue;
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.type === 'content_block_delta' && parsed.delta?.type === 'text_delta') {
+        yield parsed.delta.text;
+      }
+    } catch {
+      // Ignore malformed partial events.
     }
   }
 }

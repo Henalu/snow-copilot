@@ -4,8 +4,10 @@
 // The old "backendUrl" setting is migrated here as customEndpoint.url.
 //
 // Expected backend contract (matches the existing api/chat.js):
-//   POST /api/chat  { action, code, question, context, model? }
+//   POST /api/chat  { action, code, question, context, model?, prompt?, retrieval? }
 //   Response: text/event-stream with  data: {"delta":{"text":"..."}}  chunks
+
+import { readSseEventData } from './streaming.js';
 
 export const customEndpointProvider = {
   id: 'customEndpoint',
@@ -14,11 +16,13 @@ export const customEndpointProvider = {
     return !!(config.enabled && config.url?.trim());
   },
 
-  async *sendPrompt({ action, code, question, context, config, model }) {
+  async *sendPrompt({ action, code, question, context, config, model, prompt, rag }) {
     const url = normalizeUrl(config.url);
     const headers = buildHeaders(config);
     const bodyData = { action, code, question, context };
     if (model || config.model?.trim()) bodyData.model = model || config.model;
+    if (prompt?.system && prompt?.user) bodyData.prompt = prompt;
+    if (rag) bodyData.retrieval = rag;
 
     const resp = await fetch(`${url}/api/chat`, {
       method: 'POST',
@@ -77,25 +81,15 @@ function buildHeaders(config) {
 }
 
 async function* parseBackendStream(body) {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split('\n')) {
-      if (!line.startsWith('data: ')) continue;
-      const data = line.slice(6).trim();
-      if (data === '[DONE]' || !data) continue;
-      try {
-        const parsed = JSON.parse(data);
-        if (parsed.error) throw new Error(parsed.error);
-        const text = parsed.delta?.text;
-        if (text) yield text;
-      } catch (err) {
-        if (err.message !== 'Unexpected end of JSON input') throw err;
-      }
+  for await (const data of readSseEventData(body)) {
+    if (data === '[DONE]' || !data) continue;
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed.error) throw new Error(parsed.error);
+      const text = parsed.delta?.text;
+      if (text) yield text;
+    } catch (err) {
+      if (err.message !== 'Unexpected end of JSON input') throw err;
     }
   }
 }

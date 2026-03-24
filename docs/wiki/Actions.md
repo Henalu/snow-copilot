@@ -1,119 +1,91 @@
 # Actions Reference
 
-SN Assistant provides five actions, accessible from the sidebar panel that appears when a script editor is detected.
+SN Assistant shows different actions depending on the detected context.
 
----
+## Script actions
 
-## Explain
+These appear when a supported script editor is detected.
 
-**What it does:** Analyzes the script and produces a plain-language explanation covering:
-- What the script does overall
-- The main logic flow
-- ServiceNow APIs and GlideRecord calls used
-- Triggers, inputs, and outputs
-- Any notable side effects
+### Explain
 
-**When to use it:**
-- When you inherit a script written by someone else
-- When reviewing a Business Rule or Script Include you haven't seen before
-- When onboarding to a new ServiceNow instance
+Explains what the current script does:
 
-**Tips:**
-- Works best with complete scripts rather than fragments
-- For complex scripts, the explanation may include a numbered walkthrough of the main steps
+- overall purpose
+- logic flow
+- important APIs
+- side effects
+- ServiceNow constraints and patterns
 
----
+When RAG is enabled for this action, the answer can be grounded with Breaking Trail content.
 
-## Comment
+### Comment
 
-**What it does:** Adds documentation to the script:
-- JSDoc block at the top of functions
-- Inline comments explaining non-obvious logic
-- Parameter and return type annotations where applicable
+Adds JSDoc and inline comments to help future maintainers understand the script.
 
-**When to use it:**
-- Before handing off code to another developer
-- When preparing for a code review
-- When you want to document a script you wrote
+### Refactor
 
-**Tips:**
-- Review the generated comments before saving — the AI may occasionally misinterpret intent
-- Works particularly well on Script Includes and Business Rules
+Improves the structure and ServiceNow implementation quality of the current script.
 
----
+### Ask
 
-## Refactor
+Lets you ask a free-form question about the current script. This is the most flexible action and one of the main places where RAG grounding adds value.
 
-**What it does:** Rewrites the script to improve:
-- Code readability and structure
-- Adherence to ServiceNow development best practices
-- Performance (e.g. proper use of GlideRecord queries, avoiding client-side GlideRecord)
-- Error handling
-- Naming conventions
+### Document
 
-**When to use it:**
-- When cleaning up legacy scripts
-- When preparing a script for production
-- When optimizing for performance
+Generates technical documentation for the current script and downloads it automatically as a Word document.
 
-**Tips:**
-- Always test the refactored code in a dev/test instance before applying to production
-- The refactored version preserves the original business logic — verify this before deploying
+## Update Set action
 
----
+This appears when a `sys_update_set` form is detected.
 
-## Ask
+### Document UpdateSet
 
-**What it does:** Opens a free-form question input where you can ask anything about the script. The AI has the full script as context.
+Generates change documentation for the Update Set and downloads it automatically as a Word document.
 
-Example questions:
-- "What happens if the user field is empty?"
-- "Is there a race condition here?"
-- "How would I add support for the change_request table?"
-- "Why is this calling GlideRecord inside a loop?"
+Current flow:
 
-**When to use it:**
-- When you have a specific question that the other actions don't cover
-- When debugging unexpected behavior
-- When exploring how to extend the script
+1. The extension detects the Update Set form
+2. The user can add optional business or technical context in the textarea
+3. The extension captures visible Customer Updates
+4. The provider generates the document
+5. The Word file downloads automatically
 
----
+### List-first mode
 
-## Document
+Uses:
 
-**What it does:** Generates a full technical documentation document for the script, covering eight sections:
+- Update Set metadata from the form
+- visible Customer Updates list metadata
 
-1. **Overview** — Purpose and scope
-2. **Trigger / Entry Point** — When and how the script executes
-3. **Inputs & Parameters** — Data the script receives
-4. **Logic Description** — Step-by-step walkthrough
-5. **ServiceNow APIs Used** — GlideRecord, GlideScopedEvaluator, etc.
-6. **Dependencies** — Other scripts, tables, or system properties
-7. **Side Effects & Outputs** — What the script changes or returns
-8. **Notes & Recommendations** — Edge cases, warnings, suggestions
+Best for:
 
-The document is automatically downloaded as a `.doc` file (Word-compatible) when the AI finishes generating it.
+- faster documentation
+- lower browser overhead
+- first-pass summaries
 
-**When to use it:**
-- When creating formal technical documentation for a client or team
-- Before handing off a ServiceNow implementation
-- For compliance or audit requirements
-- When building a technical runbook
+### Deep mode
 
-**Tips:**
-- The `.doc` file can be opened directly in Microsoft Word or Google Docs
-- Use a premium model (Claude Sonnet, GPT-4.1) for best results — the Smart Defaults recommendation engine assigns Document to higher-quality models automatically
+Builds on `List-first` and tries to enrich updates with:
 
----
+- `sys_update_xml` payload details
+- inferred artifact metadata
+- script previews
+- field summaries
 
-## Panel Controls
+Best for:
+
+- technical handover
+- deeper release notes
+- documentation that needs stronger grounding
+
+## Panel controls
 
 | Element | Function |
 |---|---|
-| ⚡ trigger button | Opens / closes the panel |
-| × button | Closes the panel (trigger remains visible) |
-| ⊞ button | Resets panel to original position and size |
-| Panel header | Drag to move the panel freely |
-| Left edge | Drag to resize horizontally |
-| Bottom edge | Drag to resize vertically |
-| Bottom-left corner | Drag to resize both dimensions |
+| Trigger button | Opens or closes the panel |
+| `X` button | Closes the panel |
+| Reset button | Restores default position and size |
+| Header | Drag to move the panel |
+| Left edge | Resize horizontally |
+| Bottom edge | Resize vertically |
+| Bottom-left corner | Resize both dimensions |

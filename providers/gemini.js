@@ -1,6 +1,8 @@
 // providers/gemini.js — Google Gemini adapter
 
 import { buildPrompt } from './prompts.js';
+import { getMaxTokensForAction } from './outputBudget.js';
+import { readSseEventData } from './streaming.js';
 
 export const geminiProvider = {
   id: 'gemini',
@@ -9,9 +11,10 @@ export const geminiProvider = {
     return !!(config.enabled && config.apiKey?.trim());
   },
 
-  async *sendPrompt({ action, code, question, context, config, model }) {
-    const prompt = buildPrompt(action, code, context, question);
+  async *sendPrompt({ action, code, question, context, config, model, prompt }) {
+    const resolvedPrompt = prompt || buildPrompt(action, code, context, question);
     const modelId = model || config.model || 'gemini-2.0-flash';
+    const maxTokens = getMaxTokensForAction(action, 2048);
 
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:streamGenerateContent?key=${config.apiKey}&alt=sse`,
@@ -19,9 +22,9 @@ export const geminiProvider = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: prompt.system }] },
-          contents: [{ role: 'user', parts: [{ text: prompt.user }] }],
-          generationConfig: { maxOutputTokens: 2048 }
+          system_instruction: { parts: [{ text: resolvedPrompt.system }] },
+          contents: [{ role: 'user', parts: [{ text: resolvedPrompt.user }] }],
+          generationConfig: { maxOutputTokens: maxTokens }
         })
       }
     );
@@ -66,22 +69,14 @@ export const geminiProvider = {
 };
 
 async function* parseGeminiStream(body) {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    for (const line of chunk.split('\n')) {
-      if (!line.startsWith('data: ')) continue;
-      const data = line.slice(6).trim();
-      if (!data) continue;
-      try {
-        const parsed = JSON.parse(data);
-        const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) yield text;
-      } catch { /* incomplete chunk */ }
+  for await (const data of readSseEventData(body)) {
+    if (!data) continue;
+    try {
+      const parsed = JSON.parse(data);
+      const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) yield text;
+    } catch {
+      // Ignore malformed partial events.
     }
   }
 }

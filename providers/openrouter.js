@@ -1,6 +1,7 @@
 // providers/openrouter.js — OpenRouter adapter (OpenAI-compatible format)
 
 import { buildPrompt } from './prompts.js';
+import { getMaxTokensForAction } from './outputBudget.js';
 import { parseOpenAIStream } from './openai.js';
 
 export const openrouterProvider = {
@@ -10,9 +11,10 @@ export const openrouterProvider = {
     return !!(config.enabled && config.apiKey?.trim() && config.model?.trim());
   },
 
-  async *sendPrompt({ action, code, question, context, config, model }) {
-    const prompt = buildPrompt(action, code, context, question);
+  async *sendPrompt({ action, code, question, context, config, model, prompt }) {
+    const resolvedPrompt = prompt || buildPrompt(action, code, context, question);
     const modelId = model || config.model;
+    const maxTokens = getMaxTokensForAction(action, 2048);
 
     const headers = {
       'Content-Type': 'application/json',
@@ -26,10 +28,10 @@ export const openrouterProvider = {
       headers,
       body: JSON.stringify({
         model: modelId,
-        max_tokens: 2048,
+        max_tokens: maxTokens,
         messages: [
-          { role: 'system', content: prompt.system },
-          { role: 'user',   content: prompt.user }
+          { role: 'system', content: resolvedPrompt.system },
+          { role: 'user',   content: resolvedPrompt.user }
         ],
         stream: true
       })

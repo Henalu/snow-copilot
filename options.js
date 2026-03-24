@@ -36,6 +36,7 @@ async function init() {
 
 function renderAll() {
   renderBehavior();
+  renderRag();
   renderProviders();
   renderRouting();
   renderRecommendations();
@@ -45,6 +46,25 @@ function renderAll() {
 
 function renderBehavior() {
   document.getElementById('autoShow').checked = settings.autoShow ?? true;
+  document.getElementById('preferredLanguage').value = settings.preferredLanguage || 'en';
+  document.getElementById('updateSetMode').value = settings.changeDocumentation?.updateSetMode || 'list';
+}
+
+function renderRag() {
+  const rag = settings.rag ?? {};
+
+  document.getElementById('ragEnabled').checked = rag.enabled ?? true;
+  document.getElementById('ragAction-explain').checked = rag.enabledActions?.explain ?? true;
+  document.getElementById('ragAction-ask').checked = rag.enabledActions?.ask ?? true;
+  document.getElementById('ragAction-refactor').checked = rag.enabledActions?.refactor ?? false;
+  document.getElementById('ragAction-comment').checked = rag.enabledActions?.comment ?? false;
+  document.getElementById('ragAction-document').checked = rag.enabledActions?.document ?? false;
+  document.getElementById('ragSource-breakingTrail').checked = rag.activeSources?.breakingTrail ?? true;
+  document.getElementById('ragMaxChunks').value = String(rag.maxChunks ?? 3);
+  document.getElementById('ragMaxChunksPerDocument').value = String(rag.maxChunksPerDocument ?? 2);
+  document.getElementById('ragMaxContextChars').value = String(rag.maxContextChars ?? 3200);
+  document.getElementById('ragIncludeTrace').checked = rag.includeTraceInPanel ?? true;
+  document.getElementById('ragDebug').checked = rag.debug ?? false;
 }
 
 // ─── Providers section ────────────────────────────────────────────────────────
@@ -382,6 +402,33 @@ function collectSettings() {
   const s = JSON.parse(JSON.stringify(settings)); // deep clone
 
   s.autoShow = document.getElementById('autoShow').checked;
+  s.preferredLanguage = document.getElementById('preferredLanguage').value || 'en';
+  s.changeDocumentation = {
+    ...(s.changeDocumentation || {}),
+    updateSetMode: document.getElementById('updateSetMode').value || 'list'
+  };
+  s.rag = {
+    ...(s.rag || {}),
+    enabled: document.getElementById('ragEnabled').checked,
+    debug: document.getElementById('ragDebug').checked,
+    strategy: 'servicenow-hybrid-v1',
+    maxChunks: Number(document.getElementById('ragMaxChunks').value || 3),
+    maxChunksPerDocument: Number(document.getElementById('ragMaxChunksPerDocument').value || 2),
+    maxContextChars: Number(document.getElementById('ragMaxContextChars').value || 3200),
+    includeTraceInPanel: document.getElementById('ragIncludeTrace').checked,
+    enabledActions: {
+      ...(s.rag?.enabledActions || {}),
+      explain: document.getElementById('ragAction-explain').checked,
+      ask: document.getElementById('ragAction-ask').checked,
+      refactor: document.getElementById('ragAction-refactor').checked,
+      comment: document.getElementById('ragAction-comment').checked,
+      document: document.getElementById('ragAction-document').checked
+    },
+    activeSources: {
+      ...(s.rag?.activeSources || {}),
+      breakingTrail: document.getElementById('ragSource-breakingTrail').checked
+    }
+  };
 
   // Providers
   for (const id of PROVIDER_IDS) {
@@ -487,6 +534,18 @@ function validate(s) {
         errors.push(`${ACTION_LABELS[action]}: selected provider is not configured.`);
       }
     }
+  }
+
+  if (s.rag?.enabled && !Object.values(s.rag.activeSources || {}).some(Boolean)) {
+    errors.push('RAG is enabled but no knowledge source is selected.');
+  }
+
+  if (s.rag?.enabled && !Object.values(s.rag.enabledActions || {}).some(Boolean)) {
+    errors.push('RAG is enabled but no extension action is selected for grounding.');
+  }
+
+  if ((s.rag?.maxChunks ?? 0) < 1) {
+    errors.push('Retrieved chunks must be at least 1.');
   }
 
   return errors;
