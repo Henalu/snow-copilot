@@ -5,6 +5,16 @@ import { DEFAULT_RAG_SETTINGS } from '../rag/config.js';
 export const ACTIONS = ['explain', 'comment', 'refactor', 'ask', 'document'];
 export const PROVIDER_IDS = ['anthropic', 'openai', 'gemini', 'openrouter', 'customEndpoint', 'localLlm'];
 export const RESPONSE_LANGUAGES = ['en', 'es'];
+export const PROVIDER_SECRET_FIELDS = {
+  anthropic: ['apiKey'],
+  openai: ['apiKey'],
+  gemini: ['apiKey'],
+  openrouter: ['apiKey'],
+  customEndpoint: ['apiKey', 'headersJson'],
+  localLlm: []
+};
+
+const LOCAL_PROVIDER_SECRETS_KEY = 'providerSecrets';
 
 function normalizePreferredLanguage(value) {
   return RESPONSE_LANGUAGES.includes(value) ? value : 'en';
@@ -55,7 +65,62 @@ function deepMerge(target, source) {
   return result;
 }
 
-export function migrateSettings(stored) {
+function buildEmptyProviderSecrets() {
+  const secrets = {};
+  for (const providerId of PROVIDER_IDS) {
+    secrets[providerId] = {};
+    for (const field of PROVIDER_SECRET_FIELDS[providerId] || []) {
+      secrets[providerId][field] = '';
+    }
+  }
+  return secrets;
+}
+
+function extractProviderSecrets(providers = {}) {
+  const secrets = buildEmptyProviderSecrets();
+  for (const providerId of PROVIDER_IDS) {
+    const provider = providers[providerId] || {};
+    for (const field of PROVIDER_SECRET_FIELDS[providerId] || []) {
+      secrets[providerId][field] = provider[field] ?? '';
+    }
+  }
+  return secrets;
+}
+
+function stripProviderSecrets(providers = {}) {
+  const sanitizedProviders = {};
+  for (const providerId of PROVIDER_IDS) {
+    sanitizedProviders[providerId] = { ...(providers[providerId] || {}) };
+    for (const field of PROVIDER_SECRET_FIELDS[providerId] || []) {
+      sanitizedProviders[providerId][field] = '';
+    }
+  }
+  return sanitizedProviders;
+}
+
+function mergeProviderSecrets(providers = {}, storedSecrets = {}) {
+  const mergedProviders = {};
+
+  for (const providerId of PROVIDER_IDS) {
+    const provider = { ...(providers[providerId] || {}) };
+    const providerSecrets = storedSecrets?.[providerId] || {};
+
+    for (const field of PROVIDER_SECRET_FIELDS[providerId] || []) {
+      const localSecret = providerSecrets[field];
+      if (typeof localSecret === 'string' && localSecret.length > 0) {
+        provider[field] = localSecret;
+      } else if (provider[field] == null) {
+        provider[field] = '';
+      }
+    }
+
+    mergedProviders[providerId] = provider;
+  }
+
+  return mergedProviders;
+}
+
+export function migrateSettings(stored = {}, localState = {}) {
   const settings = deepMerge(DEFAULT_SETTINGS, stored);
   settings.preferredLanguage = normalizePreferredLanguage(
     stored.preferredLanguage || stored.responseLanguage || settings.preferredLanguage
@@ -76,21 +141,34 @@ export function migrateSettings(stored) {
     }
   }
 
+  settings.providers = mergeProviderSecrets(
+    settings.providers,
+    localState?.[LOCAL_PROVIDER_SECRETS_KEY] || {}
+  );
+
   return settings;
 }
 
 export async function loadSettings() {
-  const stored = await chrome.storage.sync.get(null);
-  return migrateSettings(stored);
+  const [storedSync, storedLocal] = await Promise.all([
+    chrome.storage.sync.get(null),
+    chrome.storage.local.get(LOCAL_PROVIDER_SECRETS_KEY)
+  ]);
+  return migrateSettings(storedSync, storedLocal);
 }
 
 export async function saveSettings(settings) {
-  await chrome.storage.sync.set({
-    autoShow: settings.autoShow,
-    preferredLanguage: normalizePreferredLanguage(settings.preferredLanguage),
-    changeDocumentation: settings.changeDocumentation,
-    providers: settings.providers,
-    routing: settings.routing,
-    rag: settings.rag
-  });
+  await Promise.all([
+    chrome.storage.sync.set({
+      autoShow: settings.autoShow,
+      preferredLanguage: normalizePreferredLanguage(settings.preferredLanguage),
+      changeDocumentation: settings.changeDocumentation,
+      providers: stripProviderSecrets(settings.providers),
+      routing: settings.routing,
+      rag: settings.rag
+    }),
+    chrome.storage.local.set({
+      [LOCAL_PROVIDER_SECRETS_KEY]: extractProviderSecrets(settings.providers)
+    })
+  ]);
 }

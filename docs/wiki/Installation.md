@@ -1,10 +1,15 @@
 # Installation
 
-## Option A: Chrome Web Store
+## Public release channels
 
-Publishing is planned, but local installation is currently the main workflow.
+SN Assistant is being prepared for public distribution through:
 
-## Option B: Load unpacked
+- Chrome Web Store
+- Microsoft Edge Add-ons
+
+Those listings are the intended install path for general users.
+
+## Local development or pre-release install
 
 1. Clone the repository:
 
@@ -19,13 +24,19 @@ git clone https://github.com/Henalu/snow-copilot.git
 
 ## After installation
 
-1. Open the extension **Options**
-2. Configure at least one provider
-3. Optionally configure:
+1. Open SN Assistant from the browser toolbar
+2. If you are not on a ServiceNow page, the toolbar action opens **Options**
+3. Configure at least one provider
+4. Optionally configure:
    - preferred response language
    - RAG
    - Update Set documentation mode
-4. Save settings
+5. Save settings
+
+## Using the toolbar action
+
+- On a supported ServiceNow page, the toolbar action toggles the assistant sidebar
+- Outside ServiceNow, the toolbar action opens the options page
 
 ## Reloading after local changes
 

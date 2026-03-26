@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SN Assistant Support</title>
+  <meta name="description" content="Support information for SN Assistant, including support scope, bug report guidance, and public channels.">
+  <link rel="stylesheet" href="/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-row">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">SN</span>
+        <span class="brand-copy">
+          <span class="brand-name">SN Assistant</span>
+          <span class="brand-subtitle">ServiceNow-native AI copilot</span>
+        </span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/privacy/">Privacy</a>
+        <a class="nav-link" href="/terms/">Terms</a>
+        <a class="nav-link" href="/support/" aria-current="page">Support</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="shell page-intro">
+      <span class="eyebrow">Support</span>
+      <h1>Best-effort support, with a public scope that stays explicit.</h1>
+      <p>
+        Last updated: 2026-03-26. The initial public release is self-serve and support currently happens through public channels.
+      </p>
+    </section>
+
+    <section class="shell legal-layout">
+      <aside class="toc" aria-label="Table of contents">
+        <strong>On this page</strong>
+        <ul>
+          <li><a href="#channels">Current support channels</a></li>
+          <li><a href="#bug-report">What to include</a></li>
+          <li><a href="#debug">Recommended debug details</a></li>
+          <li><a href="#scope">Current support scope</a></li>
+          <li><a href="#limitations">Known limitations</a></li>
+          <li><a href="#response">Response expectations</a></li>
+          <li><a href="#release">Public release note</a></li>
+          <li><a href="#safety">Safety note</a></li>
+        </ul>
+      </aside>
+
+      <div class="legal-stack">
+        <article class="card" id="channels">
+          <strong>Current support channels</strong>
+          <p>At the current stage, SN Assistant support is handled through:</p>
+          <ul>
+            <li><a href="https://github.com/Henalu/snow-copilot/issues" target="_blank" rel="noopener">GitHub Issues</a> for bugs and reproducible problems</li>
+            <li><a href="https://github.com/Henalu/snow-copilot/discussions" target="_blank" rel="noopener">GitHub Discussions</a> for questions, usage help, and product feedback</li>
+          </ul>
+        </article>
+
+        <article class="card" id="bug-report">
+          <strong>What to include in a bug report</strong>
+          <p>To get useful help quickly, include:</p>
+          <ul>
+            <li>ServiceNow UI context such as Classic UI or Polaris and the table or record type</li>
+            <li>the action used, such as <code>Explain</code>, <code>Ask</code>, <code>Document</code>, or <code>Document UpdateSet</code></li>
+            <li>provider and model used</li>
+            <li>whether RAG was enabled</li>
+            <li>whether Update Set mode was <code>List-first</code> or <code>Deep</code></li>
+            <li>what happened and what you expected</li>
+            <li>any execution trace details</li>
+            <li>any relevant console or service worker errors</li>
+          </ul>
+        </article>
+
+        <article class="card" id="debug">
+          <strong>Recommended debug details</strong>
+          <p>For script actions, include:</p>
+          <ul>
+            <li>detected record type</li>
+            <li>whether the editor was visible</li>
+            <li>whether the issue reproduces after reloading the extension and refreshing the tab</li>
+          </ul>
+          <p>For Update Set documentation, include:</p>
+          <ul>
+            <li>last visible line in <code>Execution Trace</code></li>
+            <li><code>updateCount</code>, <code>deepFetched</code>, <code>outputChars</code>, or other visible trace values</li>
+          </ul>
+        </article>
+
+        <article class="card" id="scope">
+          <strong>Current support scope</strong>
+          <p>Priority support scope for the current build:</p>
+          <ul>
+            <li>verified script contexts</li>
+            <li>Update Set documentation</li>
+            <li>provider configuration</li>
+            <li>RAG settings and grounding behavior</li>
+            <li>language settings</li>
+          </ul>
+        </article>
+
+        <article class="card" id="limitations">
+          <strong>Known limitations</strong>
+          <p>Areas that should be treated as non-GA or evolving:</p>
+          <ul>
+            <li>UI Scripts</li>
+            <li>Transform Scripts</li>
+            <li>Background Scripts</li>
+            <li>edge cases in unusual ServiceNow layouts or highly customized instances</li>
+          </ul>
+        </article>
+
+        <article class="card" id="response">
+          <strong>Response expectations</strong>
+          <p>Support is currently best-effort. There is no guaranteed SLA yet. If paid plans are introduced later, support tiers can be separated more clearly.</p>
+        </article>
+
+        <article class="card" id="release">
+          <strong>Public release note</strong>
+          <p>The initial public release is expected to remain self-serve:</p>
+          <ul>
+            <li>free extension distribution</li>
+            <li>user-managed provider setup</li>
+            <li>best-effort product support through the public channels above</li>
+          </ul>
+        </article>
+
+        <article class="card" id="safety">
+          <strong>Safety note</strong>
+          <p>Do not post sensitive customer data, production secrets, or confidential scripts in public issue threads. If a future private support inbox is introduced, sensitive reports should go there instead.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-row">
+      <p>SN Assistant is a ServiceNow-specific developer copilot. It does not replace testing, review, or platform judgment.</p>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

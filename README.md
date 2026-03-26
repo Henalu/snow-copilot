@@ -1,16 +1,17 @@
 # SN Assistant
 
-AI copilot for ServiceNow developers. Explain, comment, refactor, ask questions about scripts, and generate technical documentation directly from the browser.
+AI copilot for ServiceNow developers. Explain, ask, refactor, and document scripts or Update Sets directly inside the browser.
 
-SN Assistant is no longer just a generic LLM wrapper. The current build includes:
+SN Assistant is built to be more than a generic LLM wrapper. The current build includes:
 
 - multi-provider AI routing
 - ServiceNow-aware prompts and guardrails
-- RAG grounded with Breaking Trail content
+- local RAG grounded with Breaking Trail content
 - one-click script documentation as a Word document
 - one-click Update Set documentation
-- `DEEP` mode for richer Update Set grounding from `sys_update_xml`
+- `Deep` mode for richer Update Set grounding from `sys_update_xml`
 - preferred response language in English or Spanish
+- public trust foundations for privacy, terms, support, and release operations
 
 ## Core actions
 
@@ -27,13 +28,20 @@ SN Assistant is no longer just a generic LLM wrapper. The current build includes
 
 - **Provider flexibility:** Anthropic, OpenAI, Gemini, OpenRouter, Custom Endpoint, and Local LLM
 - **Grounding:** Breaking Trail is bundled as a local RAG source for higher-quality `Ask` and `Explain` answers
-- **ServiceNow-specific change docs:** Update Set documentation can run in `List-first` or `DEEP` mode
+- **ServiceNow-specific change docs:** Update Set documentation can run in `List-first` or `Deep` mode
 - **Practical UX:** draggable and resizable panel, execution trace for long-running Update Set docs, direct Word download
 - **Language control:** all responses can be generated in English or Spanish from settings
 
 ## Quick start
 
-### 1. Load the extension locally
+### 1. Install SN Assistant
+
+Public release channels are intended to be:
+
+- Chrome Web Store
+- Microsoft Edge Add-ons
+
+For local development or pre-release testing, use the unpacked workflow:
 
 1. Clone or download this repository
 2. Open `chrome://extensions`
@@ -43,10 +51,11 @@ SN Assistant is no longer just a generic LLM wrapper. The current build includes
 
 ### 2. Configure at least one provider
 
-1. Open the extension **Options**
-2. Enable one or more AI providers
-3. Enter the required API key or local endpoint
-4. Save settings
+1. Open SN Assistant from the browser toolbar
+2. If you are not on a ServiceNow page, the toolbar action opens **Options**
+3. Enable one or more AI providers
+4. Enter the required API key or local endpoint
+5. Save settings
 
 Optional but recommended:
 
@@ -59,7 +68,7 @@ Optional but recommended:
 #### Script context
 
 1. Open a supported script form in ServiceNow
-2. Click the floating trigger button
+2. Click the floating trigger button, or click the toolbar icon while on the ServiceNow tab
 3. Choose `Explain`, `Comment`, `Refactor`, `Ask`, or `Document`
 
 #### Update Set context
@@ -112,9 +121,8 @@ See [docs/ChangeDocumentation.md](docs/ChangeDocumentation.md) for the current d
 | Scripted REST Resources | Verified |
 | Scheduled Scripts | Verified |
 | Update Sets | Verified |
-| UI Scripts | Pending verification |
-| Transform Scripts | Pending verification |
-| Background Scripts | Pending verification |
+
+Additional contexts such as UI Scripts, Transform Scripts, and Background Scripts are still evolving and should not be treated as guaranteed public support scope.
 
 ## Architecture summary
 
@@ -131,6 +139,19 @@ Project docs:
 
 - [docs/RAG.md](docs/RAG.md)
 - [docs/ChangeDocumentation.md](docs/ChangeDocumentation.md)
+- [docs/BrandFoundation.md](docs/BrandFoundation.md)
+- [docs/PrivacyPolicy.md](docs/PrivacyPolicy.md)
+- [docs/TermsOfUse.md](docs/TermsOfUse.md)
+- [docs/Support.md](docs/Support.md)
+
+Release ops:
+
+- [docs/release/README.md](docs/release/README.md)
+- [docs/release/PublicLaunchChecklist.md](docs/release/PublicLaunchChecklist.md)
+- [docs/release/StoreListing.md](docs/release/StoreListing.md)
+- [docs/release/SmokeTestChecklist.md](docs/release/SmokeTestChecklist.md)
+- [docs/release/ReleaseAudit.md](docs/release/ReleaseAudit.md)
+- [docs/release/Monetization.md](docs/release/Monetization.md)
 
 Wiki source:
 
@@ -140,14 +161,28 @@ Wiki source:
 - [docs/wiki/Actions.md](docs/wiki/Actions.md)
 - [docs/wiki/FAQ-and-Troubleshooting.md](docs/wiki/FAQ-and-Troubleshooting.md)
 
-## Privacy
+## Trust and support
 
-- API keys are stored in `chrome.storage.sync`
-- keys are only sent to the provider you configure, unless you choose `Custom Endpoint`
+Public foundations:
+
+- [Homepage](https://snow-copilot.vercel.app/)
+- [Privacy Policy](https://snow-copilot.vercel.app/privacy/)
+- [Terms of Use](https://snow-copilot.vercel.app/terms/)
+- [Support](https://snow-copilot.vercel.app/support/)
+- [Brand Foundation](docs/BrandFoundation.md)
+
+Current support channels:
+
+- [GitHub Issues](https://github.com/Henalu/snow-copilot/issues)
+- [GitHub Discussions](https://github.com/Henalu/snow-copilot/discussions)
+
+Operationally:
+
+- provider secrets such as API keys and custom auth headers are stored in `chrome.storage.local` on the current device
+- non-sensitive preferences such as routing, language, and RAG settings are stored in `chrome.storage.sync`
+- keys are only sent to the provider or endpoint you configure
 - the bundled RAG index is local to the extension package
-- Update Set `DEEP` mode reads `sys_update_xml` from the active ServiceNow instance when enabled
-
-You should still provide a public privacy policy before publishing to the Chrome Web Store.
+- Update Set `Deep` mode reads `sys_update_xml` from the active ServiceNow instance when enabled
 
 ## License
 

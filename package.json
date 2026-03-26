@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "rag:build": "node scripts/build-rag-index.mjs"
+    "rag:build": "node scripts/build-rag-index.mjs",
+    "package:extension": "node scripts/package-extension.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0"

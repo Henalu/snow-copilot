@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SN Assistant Privacy Policy</title>
+  <meta name="description" content="Privacy Policy for SN Assistant, the AI copilot for ServiceNow developers.">
+  <link rel="stylesheet" href="/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-row">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">SN</span>
+        <span class="brand-copy">
+          <span class="brand-name">SN Assistant</span>
+          <span class="brand-subtitle">ServiceNow-native AI copilot</span>
+        </span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a class="nav-link" href="/">Home</a>
+        <a class="nav-link" href="/privacy/" aria-current="page">Privacy</a>
+        <a class="nav-link" href="/terms/">Terms</a>
+        <a class="nav-link" href="/support/">Support</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="shell page-intro">
+      <span class="eyebrow">Privacy Policy</span>
+      <h1>What the extension stores, reads, and sends.</h1>
+      <p>
+        Last updated: 2026-03-26. SN Assistant is a browser extension for ServiceNow developers.
+        This policy explains what data the extension handles, where that data goes, and what choices users have.
+      </p>
+    </section>
+
+    <section class="shell legal-layout">
+      <aside class="toc" aria-label="Table of contents">
+        <strong>On this page</strong>
+        <ul>
+          <li><a href="#storage">Local storage</a></li>
+          <li><a href="#read">What it reads</a></li>
+          <li><a href="#send">Where content is sent</a></li>
+          <li><a href="#rag">RAG and local knowledge</a></li>
+          <li><a href="#collect">What we do not collect</a></li>
+          <li><a href="#third-parties">Third-party services</a></li>
+          <li><a href="#support">Support submissions</a></li>
+          <li><a href="#security">Security notes</a></li>
+          <li><a href="#choices">User choices</a></li>
+          <li><a href="#changes">Policy changes</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </aside>
+
+      <div class="legal-stack">
+        <article class="card" id="storage">
+          <strong>What SN Assistant stores locally</strong>
+          <p>SN Assistant stores configuration in two browser storage areas:</p>
+          <ul>
+            <li><code>chrome.storage.sync</code> for non-sensitive preferences such as enabled providers, selected models, routing, preferred language, RAG settings, and Update Set documentation settings</li>
+            <li><code>chrome.storage.local</code> for provider secrets such as API keys and custom authentication headers</li>
+          </ul>
+          <p>Provider secrets stay on the current browser profile and do not sync across browsers by default.</p>
+        </article>
+
+        <article class="card" id="read">
+          <strong>What content SN Assistant reads from ServiceNow</strong>
+          <p>Depending on the action used, SN Assistant may read:</p>
+          <ul>
+            <li>script content from supported ServiceNow editor forms</li>
+            <li>page metadata such as table, <code>sys_id</code>, and detected record type</li>
+            <li>Update Set form fields</li>
+            <li>visible Customer Updates related-list data</li>
+            <li><code>sys_update_xml</code> payload details when <code>Deep</code> Update Set mode is enabled</li>
+          </ul>
+        </article>
+
+        <article class="card" id="send">
+          <strong>Where user content is sent</strong>
+          <p>SN Assistant does not have to send content to a central SN Assistant server.</p>
+          <p>By default, content is sent only to the AI provider or endpoint chosen by the user, such as:</p>
+          <ul>
+            <li>Anthropic</li>
+            <li>OpenAI</li>
+            <li>Google Gemini</li>
+            <li>OpenRouter</li>
+            <li>a user-configured Custom Endpoint</li>
+            <li>a local model endpoint such as Ollama or LM Studio</li>
+          </ul>
+          <p>If the user selects <code>Custom Endpoint</code>, the destination and its privacy practices are controlled by that endpoint owner. If the user selects <code>Local LLM</code>, content may remain entirely on the local machine.</p>
+        </article>
+
+        <article class="card" id="rag">
+          <strong>RAG and local knowledge</strong>
+          <p>The current RAG knowledge base bundled with the extension is local to the extension package.</p>
+          <ul>
+            <li>Breaking Trail content is indexed ahead of time and shipped inside the extension package</li>
+            <li>retrieval happens locally inside the extension runtime</li>
+            <li>the bundled knowledge base does not require sending data to a separate retrieval service</li>
+          </ul>
+        </article>
+
+        <article class="card" id="collect">
+          <strong>Data we do not intentionally collect</strong>
+          <p>SN Assistant does not intentionally collect, sell, or broker:</p>
+          <ul>
+            <li>analytics tied to a named SN Assistant account</li>
+            <li>central behavioral profiles</li>
+            <li>ad tracking data</li>
+            <li>unrelated browsing activity</li>
+          </ul>
+          <p>At the current stage, the extension does not require a user account to function.</p>
+        </article>
+
+        <article class="card" id="third-parties">
+          <strong>Third-party services</strong>
+          <p>When a user configures an external AI provider, that provider receives the request content necessary to generate a response. Each provider has its own terms and privacy practices.</p>
+          <p>Users are responsible for reviewing the policies of the providers and endpoints they choose to use.</p>
+        </article>
+
+        <article class="card" id="support">
+          <strong>Support and user-submitted information</strong>
+          <p>If a user contacts support through GitHub Issues, GitHub Discussions, or a future support inbox, any information voluntarily shared in that support request may be used to troubleshoot the reported issue.</p>
+          <p>Users should avoid posting sensitive production data in public support channels.</p>
+        </article>
+
+        <article class="card" id="security">
+          <strong>Security notes</strong>
+          <ul>
+            <li>provider secrets are stored in the user's local browser profile storage</li>
+            <li>requests are made from the extension runtime to the configured provider or endpoint</li>
+            <li>the extension is designed so provider calls happen through the service worker, not through the ServiceNow page DOM</li>
+            <li>exported settings files include secrets and should be handled like credentials</li>
+          </ul>
+          <p>No system can guarantee absolute security, and users remain responsible for choosing where and how they send sensitive data.</p>
+        </article>
+
+        <article class="card" id="choices">
+          <strong>User choices</strong>
+          <p>Users can:</p>
+          <ul>
+            <li>choose which provider to use</li>
+            <li>disable providers</li>
+            <li>use a local model</li>
+            <li>disable RAG</li>
+            <li>disable <code>Deep</code> Update Set mode</li>
+            <li>remove the extension and its stored settings</li>
+          </ul>
+        </article>
+
+        <article class="card" id="changes">
+          <strong>Changes to this policy</strong>
+          <p>This policy may be updated as the product evolves. The latest version should be published at this public policy URL and referenced by product documentation and store listings.</p>
+        </article>
+
+        <article class="card" id="contact">
+          <strong>Contact</strong>
+          <p>Current support surface:</p>
+          <ul>
+            <li><a href="https://github.com/Henalu/snow-copilot/issues" target="_blank" rel="noopener">GitHub Issues</a></li>
+            <li><a href="https://github.com/Henalu/snow-copilot/discussions" target="_blank" rel="noopener">GitHub Discussions</a></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-row">
+      <p>SN Assistant is a ServiceNow-specific developer copilot. It does not replace testing, review, or platform judgment.</p>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/terms/">Terms</a>
+        <a href="/support/">Support</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

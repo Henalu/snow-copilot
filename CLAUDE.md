@@ -19,6 +19,25 @@ El objetivo del producto no es solo reenviar codigo a un modelo, sino aportar:
 - documentacion tecnica util
 - una experiencia ligera dentro de la UI de ServiceNow
 
+## Brand foundation
+
+La base de producto y tono ahora vive tambien en:
+
+- `docs/BrandFoundation.md`
+- `docs/PrivacyPolicy.md`
+- `docs/TermsOfUse.md`
+- `docs/Support.md`
+- `https://snow-copilot.vercel.app/`
+- `https://snow-copilot.vercel.app/privacy/`
+- `https://snow-copilot.vercel.app/terms/`
+- `https://snow-copilot.vercel.app/support/`
+
+Resumen operativo:
+
+- **Vision:** que los equipos ServiceNow puedan entender y documentar cambio con confianza y rapidez
+- **Mision:** ayudar a desarrolladores ServiceNow a moverse mas rapido sin perder rigor tecnico
+- **Valores clave:** verdad de plataforma, velocidad, honestidad ante incertidumbre, utilidad real y control del desarrollador
+
 ## Stack
 
 - **Extension:** JavaScript vanilla, Chrome MV3, sin bundler
@@ -121,15 +140,25 @@ Notas actuales:
 - parser robusto SSE/NDJSON en `providers/streaming.js`
 - `Document UpdateSet` usa salida bufferizada para evitar castigar el DOM
 
-### `chrome.storage.sync`
+### Storage de configuracion
 
-Toda la configuracion vive en `chrome.storage.sync`, incluyendo:
+La configuracion sensible y no sensible se separa:
 
-- providers
+- `chrome.storage.sync` para preferencias no sensibles
+- `chrome.storage.local` para secretos de providers
+
+En `chrome.storage.sync` viven:
+
+- estado general de providers
 - routing
 - preferred language
 - RAG settings
 - Update Set documentation mode
+
+En `chrome.storage.local` viven:
+
+- API keys
+- custom auth headers
 
 ## Estado actual - 2026-03-24
 
@@ -240,6 +269,8 @@ La fuente real de defaults y migraciones esta en `storage/schema.js`.
 
 ## Contextos ServiceNow soportados
 
+### Public support scope
+
 - Business Rules (`sys_script`) - verificado
 - Script Includes (`sys_script_include`) - verificado
 - Client Scripts (`sys_script_client`) - verificado
@@ -248,9 +279,12 @@ La fuente real de defaults y migraciones esta en `storage/schema.js`.
 - Scripted REST Resource (`sys_ws_operation`) - verificado
 - Scheduled Scripts (`sysauto_script`) - verificado
 - Update Sets (`sys_update_set`) - verificado
-- UI Scripts (`sys_ui_script`) - pendiente verificar
-- Transform Scripts (`sys_transform_script`) - pendiente verificar
-- Background Scripts - pendiente verificar
+
+### Experimental or not yet public-release scope
+
+- UI Scripts (`sys_ui_script`)
+- Transform Scripts (`sys_transform_script`)
+- Background Scripts
 
 ## Notas de debugging
 
@@ -307,13 +341,14 @@ Si falla tras recargar la extension y no refrescar la pagina, puede aparecer `Ex
 ## Tareas pendientes
 
 - [ ] eliminar `chat.js` duplicado en la raiz del repo
-- [ ] verificar UI Scripts, Transform Scripts y Background Scripts
+- [ ] validar si UI Scripts, Transform Scripts y Background Scripts entran en soporte publico o permanecen como experimentales
 - [ ] probar todos los providers end-to-end en uso real
-- [ ] preparar privacidad, listing y release checklist para publicacion
+- [x] publicar homepage, privacy, terms y support en URLs publicas finales para Chrome Web Store y Edge Add-ons
+- [x] preparar listing y release checklist para publicacion
 
 ## Proximas fases
 
 - **Fase siguiente:** pulir `Deep` mode para Update Sets y documentacion package-level mas rica
 - **Despues:** soporte de Customer Updates seleccionados y `Document Solution`
 - **Mas adelante:** evaluacion y mejora del grounding RAG
-- **Monetizacion/publicacion:** preparar beta publica, politica de privacidad y modelo de suscripcion
+- **Monetizacion/publicacion:** lanzar release publica free + BYO key y despues montar `SN Assistant Cloud` con suscripcion externa

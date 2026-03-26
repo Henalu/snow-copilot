@@ -35,6 +35,18 @@ Yes. The preferred response language can be set in Options. Current choices are 
 
 Yes. `Document UpdateSet` is available when a `sys_update_set` form is detected.
 
+### Where can users find privacy, terms, and support information?
+
+These are published at the public product site:
+
+- `https://snow-copilot.vercel.app/privacy/`
+- `https://snow-copilot.vercel.app/terms/`
+- `https://snow-copilot.vercel.app/support/`
+
+### Where are API keys stored?
+
+Provider secrets such as API keys and custom auth headers are stored in local browser storage on the current device. They do not sync across browser profiles by default.
+
 ## Troubleshooting
 
 ### The trigger button does not appear
@@ -54,6 +66,10 @@ detectScriptEditor()
 ```
 
 If you are on an Update Set form instead of a script form, the relevant detection is the Update Set context, not Monaco editor detection.
+
+### The toolbar button opens settings instead of the sidebar
+
+That is expected outside ServiceNow. On a supported ServiceNow tab, the toolbar action toggles the assistant. On other tabs, it opens the options page.
 
 ### The extension shows `Extension context invalidated`
 

@@ -2,12 +2,11 @@
   "manifest_version": 3,
   "name": "SN Assistant",
   "version": "0.2.0",
-  "description": "AI assistant for ServiceNow developers. Explain, comment, refactor and query your scripts with multiple AI providers.",
+  "description": "AI copilot for ServiceNow developers. Explain, ask, refactor, and document scripts or Update Sets with grounded ServiceNow context.",
 
   "permissions": [
     "storage",
-    "activeTab",
-    "scripting"
+    "activeTab"
   ],
 
   "host_permissions": [
@@ -36,6 +35,15 @@
   "options_ui": {
     "page": "options.html",
     "open_in_tab": true
+  },
+
+  "action": {
+    "default_title": "SN Assistant",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
   },
 
   "icons": {

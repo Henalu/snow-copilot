@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SN Assistant | AI Copilot for ServiceNow Developers</title>
+  <meta name="description" content="SN Assistant is an AI copilot for ServiceNow developers. Explain scripts, ask grounded questions, refactor code, and document Update Sets directly in the browser.">
+  <link rel="stylesheet" href="/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell header-row">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">SN</span>
+        <span class="brand-copy">
+          <span class="brand-name">SN Assistant</span>
+          <span class="brand-subtitle">ServiceNow-native AI copilot</span>
+        </span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a class="nav-link" href="/privacy/">Privacy</a>
+        <a class="nav-link" href="/terms/">Terms</a>
+        <a class="nav-link" href="/support/">Support</a>
+        <a class="nav-link" href="https://github.com/Henalu/snow-copilot" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="shell hero">
+      <div>
+        <span class="eyebrow">Platform truth over generic AI</span>
+        <h1>Built for ServiceNow work that has to hold up in real delivery.</h1>
+        <p class="lede">
+          SN Assistant helps ServiceNow developers understand scripts, challenge weak patterns,
+          and document code and Update Sets without leaving the platform. It is designed to stay
+          closer to ServiceNow reality and further away from polished nonsense.
+        </p>
+        <div class="cta-row">
+          <a class="button" href="https://github.com/Henalu/snow-copilot" target="_blank" rel="noopener">View repository</a>
+          <a class="button-secondary" href="/support/">Read support scope</a>
+        </div>
+      </div>
+
+      <aside class="summary-box" aria-label="Release summary">
+        <span class="kicker">Launch model</span>
+        <div class="summary-item">
+          <div class="summary-label">Current release</div>
+          <div class="summary-value">Free extension, no account required</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Provider model</div>
+          <div class="summary-value">Bring your own provider, endpoint, or local model</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Trust posture</div>
+          <div class="summary-value">Grounded when useful, explicit when uncertain</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-label">Future commercial path</div>
+          <div class="summary-value">Managed SN Assistant Cloud for Pro and Team plans</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="shell section">
+      <div class="section-grid">
+        <div class="section-heading">
+          <span class="kicker">What it does</span>
+          <h2>Less guessing. More useful platform work.</h2>
+        </div>
+        <div class="feature-list">
+          <article class="card">
+            <strong>Explain</strong>
+            <p>Break down supported ServiceNow scripts with platform-aware guidance and clearer logic flow.</p>
+          </article>
+          <article class="card">
+            <strong>Ask</strong>
+            <p>Ask technical questions about the current script without switching context or losing the current record.</p>
+          </article>
+          <article class="card">
+            <strong>Refactor</strong>
+            <p>Improve structure and implementation quality while staying closer to valid ServiceNow patterns.</p>
+          </article>
+          <article class="card">
+            <strong>Comment</strong>
+            <p>Add JSDoc and inline comments so inherited code becomes easier to review and maintain.</p>
+          </article>
+          <article class="card">
+            <strong>Document</strong>
+            <p>Generate Word documentation for scripts directly from the browser.</p>
+          </article>
+          <article class="card">
+            <strong>Document UpdateSet</strong>
+            <p>Capture visible Customer Updates and produce change documentation for <code>sys_update_set</code> records.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell section">
+      <div class="section-grid">
+        <div class="section-heading">
+          <span class="kicker">Public support scope</span>
+          <h2>Only what is verified gets promised in public.</h2>
+          <p>SN Assistant is intentionally specific about what counts as current public support.</p>
+        </div>
+        <div>
+          <div class="scope-list">
+            <article class="card">
+              <span class="scope-meta">Verified</span>
+              <strong>Business Rules</strong>
+              <p><code>sys_script</code></p>
+            </article>
+            <article class="card">
+              <span class="scope-meta">Verified</span>
+              <strong>Script Includes</strong>
+              <p><code>sys_script_include</code></p>
+            </article>
+            <article class="card">
+              <span class="scope-meta">Verified</span>
+              <strong>Client Scripts</strong>
+              <p><code>sys_script_client</code></p>
+            </article>
+            <article class="card">
+              <span class="scope-meta">Verified</span>
+              <strong>Fix Scripts</strong>
+              <p><code>sys_script_fix</code></p>
+            </article>
+            <article class="card">
+              <span class="scope-meta">Verified</span>
+              <strong>UI Actions</strong>
+              <p><code>sys_ui_action</code></p>
+            </article>
+            <article class="card">
+              <span class="scope-meta">Verified</span>
+              <strong>Scripted REST Resources</strong>
+              <p><code>sys_ws_operation</code></p>
+            </article>
+            <article class="card">
+              <span class="scope-meta">Verified</span>
+              <strong>Scheduled Scripts</strong>
+              <p><code>sysauto_script</code></p>
+            </article>
+            <article class="card">
+              <span class="scope-meta">Verified</span>
+              <strong>Update Sets</strong>
+              <p><code>sys_update_set</code></p>
+            </article>
+          </div>
+
+          <div class="note">
+            <strong>Not yet part of the public promise</strong>
+            <span>UI Scripts, Transform Scripts, Background Scripts, and unusual ServiceNow layout edge cases remain outside the current GA support claim.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell section">
+      <div class="section-grid">
+        <div class="section-heading">
+          <span class="kicker">Data and control</span>
+          <h2>You decide where requests go.</h2>
+          <p>The public release keeps the model simple and explicit.</p>
+        </div>
+        <div class="feature-list">
+          <article class="card">
+            <strong>Multiple providers</strong>
+            <p>Anthropic, OpenAI, Gemini, OpenRouter, custom endpoints, and local LLM setups are supported.</p>
+          </article>
+          <article class="card">
+            <strong>Local secret storage</strong>
+            <p>Provider secrets such as API keys and custom auth headers stay in local browser storage on the current device.</p>
+          </article>
+          <article class="card">
+            <strong>Selective RAG</strong>
+            <p>Breaking Trail retrieval happens locally inside the extension and is enabled only where it improves quality.</p>
+          </article>
+          <article class="card">
+            <strong>Accountless v1</strong>
+            <p>The public release is intentionally simple: install the extension, configure a provider, and work.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell section">
+      <div class="section-grid">
+        <div class="section-heading">
+          <span class="kicker">Trust surface</span>
+          <h2>The important parts should be legible before anyone installs anything.</h2>
+        </div>
+        <div class="link-list">
+          <a class="card" href="/privacy/">
+            <span>Privacy Policy</span>
+            <p>What the extension stores, reads, and sends to third-party providers.</p>
+          </a>
+          <a class="card" href="/terms/">
+            <span>Terms of Use</span>
+            <p>What the product is, what it is not, and where responsibility stays with the user.</p>
+          </a>
+          <a class="card" href="/support/">
+            <span>Support</span>
+            <p>Current support channels, public scope, and what to include in a useful bug report.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-row">
+      <p>SN Assistant is a ServiceNow-specific developer copilot. It does not replace testing, review, or platform judgment.</p>
+      <div class="footer-links">
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
+        <a href="/support/">Support</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Configuration
 
-Open extension settings from the Chrome toolbar icon, then choose **Options**.
+Open SN Assistant from the browser toolbar, then choose **Options** if you are not already on a supported ServiceNow page.
 
 ## Behavior
 
@@ -73,7 +73,7 @@ Good general-purpose alternative with strong model variety.
 
 ### Google Gemini
 
-Good speed/quality balance.
+Good speed and quality balance.
 
 ### OpenRouter
 
@@ -98,13 +98,15 @@ The extension supports:
 
 - a default provider
 - optional action-based routing
-- recommended provider/model combinations
+- recommended provider and model combinations
 
 This lets you keep fast models for lightweight work and stronger models for documentation or complex analysis.
 
 ## Data and privacy
 
-- API keys are stored in `chrome.storage.sync`
-- keys are only sent to the provider you choose
+- provider secrets such as API keys and custom auth headers are stored in `chrome.storage.local`
+- non-sensitive preferences such as routing, language, and RAG settings are stored in `chrome.storage.sync`
+- secrets are only sent to the provider or endpoint you choose
 - the RAG index is bundled locally inside the extension package
 - `Deep` Update Set mode reads additional XML payload data from the active ServiceNow instance
+- exported settings files include secrets, so they should be handled like credentials

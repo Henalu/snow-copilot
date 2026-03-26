@@ -82,6 +82,7 @@ Best for:
 
 | Element | Function |
 |---|---|
+| Toolbar action | Toggles the assistant on supported ServiceNow tabs, or opens Options elsewhere |
 | Trigger button | Opens or closes the panel |
 | `X` button | Closes the panel |
 | Reset button | Restores default position and size |

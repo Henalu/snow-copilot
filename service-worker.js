@@ -2,7 +2,7 @@
 // Initializes defaults on install/update, relays sidebar toggle messages,
 // and streams AI provider responses to content scripts via ports.
 
-import { migrateSettings } from './storage/schema.js';
+import { loadSettings, saveSettings } from './storage/schema.js';
 import { prepareActionExecution } from './providers/manager.js';
 
 const BACKGROUND_ONLY_ACTIONS = new Set(['documentUpdateSet']);
@@ -10,17 +10,17 @@ const BUFFERED_PROGRESS_INTERVAL_MS = 3000;
 const BUFFERED_PROGRESS_CHAR_STEP = 600;
 
 chrome.runtime.onInstalled.addListener(async () => {
-  const stored = await chrome.storage.sync.get(null);
-  const settings = migrateSettings(stored);
+  const settings = await loadSettings();
+  await saveSettings(settings);
+});
 
-  await chrome.storage.sync.set({
-    autoShow: settings.autoShow,
-    preferredLanguage: settings.preferredLanguage,
-    changeDocumentation: settings.changeDocumentation,
-    providers: settings.providers,
-    routing: settings.routing,
-    rag: settings.rag
-  });
+chrome.action.onClicked.addListener((tab) => {
+  if (tab?.id && /^https:\/\/[^/]+\.service-now\.com\//.test(tab.url || '')) {
+    chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_SIDEBAR' });
+    return;
+  }
+
+  chrome.runtime.openOptionsPage();
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
