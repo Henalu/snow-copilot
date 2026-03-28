@@ -12,17 +12,16 @@
     <div class="shell header-row">
       <a class="brand" href="/">
         <span class="brand-mark" aria-hidden="true">SN</span>
-        <span class="brand-name">SN Assistant</span>
+        <span class="brand-copy">
+          <span class="brand-name">SN Assistant</span>
+          <span class="brand-subtitle">ServiceNow-native AI copilot</span>
+        </span>
       </a>
       <nav class="nav" aria-label="Primary">
         <a class="nav-link" href="/">Home</a>
         <a class="nav-link" href="/privacy/">Privacy</a>
         <a class="nav-link" href="/terms/" aria-current="page">Terms</a>
         <a class="nav-link" href="/support/">Support</a>
-        <a class="nav-link custom-flex" href="https://github.com/Henalu/snow-copilot" target="_blank" rel="noopener">
-          GitHub
-          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
-        </a>
       </nav>
     </div>
   </header>
@@ -36,7 +35,7 @@
       </p>
     </section>
 
-    <section class="shell legal-layout border-t-section">
+    <section class="shell legal-layout">
       <aside class="toc" aria-label="Table of contents">
         <strong>On this page</strong>
         <ul>
@@ -57,13 +56,12 @@
 
       <div class="legal-stack">
         <article class="card" id="overview">
-          <h2>Overview</h2>
-          <p>These terms govern the use of SN Assistant as a browser extension and related product materials.</p>
+          <strong>Overview</strong>
           <p>By using SN Assistant, users agree to use it responsibly and understand its limitations.</p>
         </article>
 
         <article class="card" id="nature">
-          <h2>Product nature</h2>
+          <strong>Product nature</strong>
           <p>SN Assistant is an assistive developer tool. It helps users explain, refactor, comment, ask questions about, and document ServiceNow code and changes.</p>
           <p>The current public release is intended to be a free browser extension where users configure their own provider, endpoint, or local model.</p>
           <p>It is not:</p>
@@ -77,7 +75,7 @@
         </article>
 
         <article class="card" id="responsibility">
-          <h2>User responsibility</h2>
+          <strong>User responsibility</strong>
           <p>Users remain responsible for:</p>
           <ul>
             <li>reviewing generated output</li>
@@ -89,13 +87,13 @@
         </article>
 
         <article class="card" id="providers">
-          <h2>External providers</h2>
+          <strong>External providers</strong>
           <p>SN Assistant can connect to third-party AI services and custom endpoints selected by the user.</p>
           <p>Those services are not controlled by SN Assistant. Their availability, pricing, data handling, and output quality are governed by their own terms.</p>
         </article>
 
         <article class="card" id="acceptable-use">
-          <h2>Acceptable use</h2>
+          <strong>Acceptable use</strong>
           <p>Users must not use SN Assistant in ways that:</p>
           <ul>
             <li>violate law or regulation</li>
@@ -106,7 +104,7 @@
         </article>
 
         <article class="card" id="warranty">
-          <h2>No warranty</h2>
+          <strong>No warranty</strong>
           <p>SN Assistant is provided on an <code>as is</code> and <code>as available</code> basis.</p>
           <p>We do not guarantee that:</p>
           <ul>
@@ -118,7 +116,7 @@
         </article>
 
         <article class="card" id="liability">
-          <h2>Limitation of liability</h2>
+          <strong>Limitation of liability</strong>
           <p>To the maximum extent allowed by law, SN Assistant and its publisher are not liable for losses resulting from:</p>
           <ul>
             <li>reliance on generated output without review</li>
@@ -129,29 +127,28 @@
         </article>
 
         <article class="card" id="ip">
-          <h2>Intellectual property</h2>
+          <strong>Intellectual property</strong>
           <p>The extension source code and product materials remain subject to the repository license and any additional rights reserved by the publisher.</p>
           <p>Use of third-party providers, platforms, or open source dependencies does not transfer ownership of SN Assistant branding or product materials.</p>
         </article>
 
         <article class="card" id="support">
-          <h2>Support</h2>
-          <p>Support is currently provided on a best-effort basis through the published support channels.</p>
-          <p>No formal SLA is promised unless a future paid plan explicitly includes one.</p>
+          <strong>Support</strong>
+          <p>Support is currently provided on a best-effort basis through the published support channels. No formal SLA is promised unless a future paid plan explicitly includes one.</p>
         </article>
 
         <article class="card" id="paid">
-          <h2>Future paid plans</h2>
+          <strong>Future paid plans</strong>
           <p>If SN Assistant introduces paid subscriptions or commercial plans, additional commercial terms, billing terms, refund policies, and hosted-service terms may apply.</p>
         </article>
 
         <article class="card" id="changes">
-          <h2>Changes to these terms</h2>
+          <strong>Changes to these terms</strong>
           <p>These terms may be updated over time as the product evolves. The latest published version should be considered the current version.</p>
         </article>
 
         <article class="card" id="contact">
-          <h2>Contact</h2>
+          <strong>Contact</strong>
           <p>Current product support surface:</p>
           <ul>
             <li><a href="https://github.com/Henalu/snow-copilot/issues" target="_blank" rel="noopener">GitHub Issues</a></li>
@@ -164,11 +161,10 @@
 
   <footer class="site-footer">
     <div class="shell footer-row">
-      <p>&copy; 2026 SN Assistant. All rights reserved. Does not replace testing, review, or platform judgment.</p>
+      <p>SN Assistant is a ServiceNow-specific developer copilot. It does not replace testing, review, or platform judgment.</p>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/privacy/">Privacy</a>
-        <a href="/terms/">Terms</a>
         <a href="/support/">Support</a>
       </div>
     </div>

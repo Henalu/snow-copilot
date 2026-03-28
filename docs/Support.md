@@ -51,11 +51,11 @@ Priority support scope for the current build:
 
 ## Known limitations
 
-Current boundary for what is still validating versus what remains outside the guaranteed scope:
+Areas that should be treated as non-GA or evolving:
 
-- UI Scripts and Transform Scripts passed the current Chrome validation pass, but they still need Edge validation before moving into the public support promise
-- Background Scripts are not currently detected reliably and remain outside the guaranteed scope
-- unusual ServiceNow layout edge cases and heavily customized instances can still behave differently
+- UI Scripts and Transform Scripts passed the current Chrome validation pass, but they still need Edge validation before entering the public support promise
+- Background Scripts remain outside the guaranteed scope because they are not currently detected reliably
+- edge cases in unusual ServiceNow layouts or highly customized instances
 
 ## Response expectations
 
