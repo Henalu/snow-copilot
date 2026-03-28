@@ -38,6 +38,12 @@ Public product foundations live at the public product site:
 - `https://snow-copilot.vercel.app/support/`
 - `docs/BrandFoundation.md`
 
+Current public release model:
+
+- no SN Assistant account required
+- users bring their own provider, endpoint, or local model
+- support is best-effort through the public channels and docs
+
 Release operations material lives in:
 
 - `docs/release/PublicLaunchChecklist.md`
@@ -59,7 +65,7 @@ Release operations material lives in:
 | Scheduled Scripts | `sysauto_script` | Verified |
 | Update Sets | `sys_update_set` | Verified |
 
-Additional contexts are improving over time, but only the verified list above should be treated as committed public support scope.
+UI Scripts and Transform Scripts look promising after the current Chrome validation pass, but they still need Edge validation before they can be treated as committed public support scope. Background Scripts are not currently detected reliably and remain outside that promise.
 
 ## Supported providers
 

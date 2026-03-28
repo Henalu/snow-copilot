@@ -340,7 +340,7 @@ Si falla tras recargar la extension y no refrescar la pagina, puede aparecer `Ex
 
 ## Tareas pendientes
 
-- [ ] eliminar `chat.js` duplicado en la raiz del repo
+- [x] eliminar `chat.js` duplicado en la raiz del repo
 - [ ] validar si UI Scripts, Transform Scripts y Background Scripts entran en soporte publico o permanecen como experimentales
 - [ ] probar todos los providers end-to-end en uso real
 - [x] publicar homepage, privacy, terms y support en URLs publicas finales para Chrome Web Store y Edge Add-ons

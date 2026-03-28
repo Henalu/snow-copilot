@@ -41,6 +41,12 @@ Public release channels are intended to be:
 - Chrome Web Store
 - Microsoft Edge Add-ons
 
+The public v1 model is intentionally simple:
+
+- no SN Assistant account required
+- bring your own provider, endpoint, or local model
+- best-effort support through the published public channels
+
 For local development or pre-release testing, use the unpacked workflow:
 
 1. Clone or download this repository
@@ -122,7 +128,7 @@ See [docs/ChangeDocumentation.md](docs/ChangeDocumentation.md) for the current d
 | Scheduled Scripts | Verified |
 | Update Sets | Verified |
 
-Additional contexts such as UI Scripts, Transform Scripts, and Background Scripts are still evolving and should not be treated as guaranteed public support scope.
+UI Scripts and Transform Scripts passed the current Chrome validation pass, but they still need Edge validation before they can move into the public support promise. Background Scripts are not currently detected reliably and should remain outside the guaranteed public scope.
 
 ## Architecture summary
 
@@ -175,6 +181,8 @@ Current support channels:
 
 - [GitHub Issues](https://github.com/Henalu/snow-copilot/issues)
 - [GitHub Discussions](https://github.com/Henalu/snow-copilot/discussions)
+
+Support is currently best-effort. There is no guaranteed SLA in the public release.
 
 Operationally:
 

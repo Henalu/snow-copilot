@@ -12,6 +12,7 @@
   - Scheduled Scripts
   - Update Sets
 - Keep UI Scripts, Transform Scripts, and Background Scripts labeled as evolving or non-GA.
+- Only promote UI Scripts, Transform Scripts, or Background Scripts into the public support promise after they pass manual validation in both Chrome and Edge.
 - Keep the launch model free and accountless for v1 public release.
 
 ## Store readiness
@@ -40,7 +41,7 @@
 - Run `npm run package:extension`.
 - Zip the contents of `dist/sn-assistant-extension` instead of zipping the full repository root.
 - Check that `manifest.json` version and listing version notes match.
-- Confirm the options page has no remote font or stylesheet dependency.
+- Confirm the options page and injected sidebar have no remote font or stylesheet dependency.
 - Confirm requested permissions are still justified for store review.
 
 ## Post-submission

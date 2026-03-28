@@ -1,8 +1,6 @@
 /* SN Assistant — sidebar.css */
 /* Panel lateral inyectado en ServiceNow */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
-
 #sn-assistant-sidebar {
   --sna-bg: #0f1117;
   --sna-surface: #1a1d27;
@@ -17,8 +15,8 @@
   --sna-success: #5effa0;
   --sna-width: 360px;
   --sna-radius: 10px;
-  --sna-font: 'DM Sans', system-ui, sans-serif;
-  --sna-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --sna-font: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --sna-mono: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 
   position: fixed !important;
   /* Position/size via CSS vars so JS can override without fighting !important */

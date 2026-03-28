@@ -7,6 +7,9 @@ This folder contains the operational material needed to publish SN Assistant as 
 - [Public launch checklist](PublicLaunchChecklist.md)
 - [Store listing draft](StoreListing.md)
 - [Smoke test checklist](SmokeTestChecklist.md)
+- [Current smoke test results](SmokeTestResults.md)
+- [Personal launch guide](Guia-Publicacion-Personal.md)
+- [Smoke test results template](Plantilla-Resultados-Smoke.md)
 - [Release audit](ReleaseAudit.md)
 - [Monetization strategy](Monetization.md)
 
@@ -14,7 +17,7 @@ This folder contains the operational material needed to publish SN Assistant as 
 
 - Public release: free browser extension
 - Commercial model: BYO API key first
-- Distribution: Chrome Web Store first, Microsoft Edge Add-ons immediately after
+- Distribution: Chrome Web Store and Microsoft Edge Add-ons in the same launch wave
 - Future paid plan: external subscription for SN Assistant Cloud, not native store billing
 
 ## Public site URLs

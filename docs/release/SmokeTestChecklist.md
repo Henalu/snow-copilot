@@ -19,6 +19,17 @@
 - Scheduled Script: `Explain`, `Ask`, `Comment`, `Refactor`, `Document`
 - Update Set: `Document UpdateSet`
 
+## Promotion candidates (non-GA until proven)
+
+- UI Scripts
+- Transform Scripts
+- Background Scripts
+
+Promotion rule:
+
+- Promote them into the public support promise only if they behave consistently in both Chrome and Edge.
+- If one of them fails in a relevant browser or provider path, keep it labeled as evolving or non-GA.
+
 ## Provider coverage
 
 - Anthropic
@@ -45,7 +56,7 @@ For each provider:
 
 - Repeat clean-profile install and basic smoke flow in Microsoft Edge
 - Confirm toolbar action behavior matches Chrome
-- Confirm options page styling loads fully without remote dependencies
+- Confirm the options page and injected sidebar styling load fully without remote dependencies
 
 ## Disclosure validation
 

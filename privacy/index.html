@@ -12,16 +12,17 @@
     <div class="shell header-row">
       <a class="brand" href="/">
         <span class="brand-mark" aria-hidden="true">SN</span>
-        <span class="brand-copy">
-          <span class="brand-name">SN Assistant</span>
-          <span class="brand-subtitle">ServiceNow-native AI copilot</span>
-        </span>
+        <span class="brand-name">SN Assistant</span>
       </a>
       <nav class="nav" aria-label="Primary">
         <a class="nav-link" href="/">Home</a>
         <a class="nav-link" href="/privacy/" aria-current="page">Privacy</a>
         <a class="nav-link" href="/terms/">Terms</a>
         <a class="nav-link" href="/support/">Support</a>
+        <a class="nav-link custom-flex" href="https://github.com/Henalu/snow-copilot" target="_blank" rel="noopener">
+          GitHub
+          <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+        </a>
       </nav>
     </div>
   </header>
@@ -36,7 +37,7 @@
       </p>
     </section>
 
-    <section class="shell legal-layout">
+    <section class="shell legal-layout border-t-section">
       <aside class="toc" aria-label="Table of contents">
         <strong>On this page</strong>
         <ul>
@@ -45,6 +46,7 @@
           <li><a href="#send">Where content is sent</a></li>
           <li><a href="#rag">RAG and local knowledge</a></li>
           <li><a href="#collect">What we do not collect</a></li>
+          <li><a href="#account">No account required</a></li>
           <li><a href="#third-parties">Third-party services</a></li>
           <li><a href="#support">Support submissions</a></li>
           <li><a href="#security">Security notes</a></li>
@@ -56,7 +58,7 @@
 
       <div class="legal-stack">
         <article class="card" id="storage">
-          <strong>What SN Assistant stores locally</strong>
+          <h2>What SN Assistant stores locally</h2>
           <p>SN Assistant stores configuration in two browser storage areas:</p>
           <ul>
             <li><code>chrome.storage.sync</code> for non-sensitive preferences such as enabled providers, selected models, routing, preferred language, RAG settings, and Update Set documentation settings</li>
@@ -66,7 +68,7 @@
         </article>
 
         <article class="card" id="read">
-          <strong>What content SN Assistant reads from ServiceNow</strong>
+          <h2>What content SN Assistant reads from ServiceNow</h2>
           <p>Depending on the action used, SN Assistant may read:</p>
           <ul>
             <li>script content from supported ServiceNow editor forms</li>
@@ -78,7 +80,7 @@
         </article>
 
         <article class="card" id="send">
-          <strong>Where user content is sent</strong>
+          <h2>Where user content is sent</h2>
           <p>SN Assistant does not have to send content to a central SN Assistant server.</p>
           <p>By default, content is sent only to the AI provider or endpoint chosen by the user, such as:</p>
           <ul>
@@ -89,11 +91,12 @@
             <li>a user-configured Custom Endpoint</li>
             <li>a local model endpoint such as Ollama or LM Studio</li>
           </ul>
-          <p>If the user selects <code>Custom Endpoint</code>, the destination and its privacy practices are controlled by that endpoint owner. If the user selects <code>Local LLM</code>, content may remain entirely on the local machine.</p>
+          <p>If the user selects <code>Custom Endpoint</code>, the destination and its privacy practices are controlled by that endpoint owner.</p>
+          <p>If the user selects <code>Local LLM</code>, content may remain entirely on the local machine.</p>
         </article>
 
         <article class="card" id="rag">
-          <strong>RAG and local knowledge</strong>
+          <h2>RAG and local knowledge</h2>
           <p>The current RAG knowledge base bundled with the extension is local to the extension package.</p>
           <ul>
             <li>Breaking Trail content is indexed ahead of time and shipped inside the extension package</li>
@@ -103,7 +106,7 @@
         </article>
 
         <article class="card" id="collect">
-          <strong>Data we do not intentionally collect</strong>
+          <h2>Data we do not intentionally collect</h2>
           <p>SN Assistant does not intentionally collect, sell, or broker:</p>
           <ul>
             <li>analytics tied to a named SN Assistant account</li>
@@ -111,23 +114,27 @@
             <li>ad tracking data</li>
             <li>unrelated browsing activity</li>
           </ul>
+        </article>
+
+        <article class="card" id="account">
+          <h2>No account required</h2>
           <p>At the current stage, the extension does not require a user account to function.</p>
         </article>
 
         <article class="card" id="third-parties">
-          <strong>Third-party services</strong>
+          <h2>Third-party services</h2>
           <p>When a user configures an external AI provider, that provider receives the request content necessary to generate a response. Each provider has its own terms and privacy practices.</p>
           <p>Users are responsible for reviewing the policies of the providers and endpoints they choose to use.</p>
         </article>
 
         <article class="card" id="support">
-          <strong>Support and user-submitted information</strong>
-          <p>If a user contacts support through GitHub Issues, GitHub Discussions, or a future support inbox, any information voluntarily shared in that support request may be used to troubleshoot the reported issue.</p>
+          <h2>Support and user-submitted information</h2>
+          <p>If a user contacts support through GitHub Issues, Discussions, or a future support inbox, any information voluntarily shared in that support request may be used to troubleshoot the reported issue.</p>
           <p>Users should avoid posting sensitive production data in public support channels.</p>
         </article>
 
         <article class="card" id="security">
-          <strong>Security notes</strong>
+          <h2>Security notes</h2>
           <ul>
             <li>provider secrets are stored in the user's local browser profile storage</li>
             <li>requests are made from the extension runtime to the configured provider or endpoint</li>
@@ -138,7 +145,7 @@
         </article>
 
         <article class="card" id="choices">
-          <strong>User choices</strong>
+          <h2>User choices</h2>
           <p>Users can:</p>
           <ul>
             <li>choose which provider to use</li>
@@ -151,12 +158,12 @@
         </article>
 
         <article class="card" id="changes">
-          <strong>Changes to this policy</strong>
-          <p>This policy may be updated as the product evolves. The latest version should be published at this public policy URL and referenced by product documentation and store listings.</p>
+          <h2>Changes to this policy</h2>
+          <p>This policy may be updated as the product evolves. The latest version should be published at the public policy URL referenced by the product documentation and store listing.</p>
         </article>
 
         <article class="card" id="contact">
-          <strong>Contact</strong>
+          <h2>Contact</h2>
           <p>Current support surface:</p>
           <ul>
             <li><a href="https://github.com/Henalu/snow-copilot/issues" target="_blank" rel="noopener">GitHub Issues</a></li>
@@ -169,9 +176,10 @@
 
   <footer class="site-footer">
     <div class="shell footer-row">
-      <p>SN Assistant is a ServiceNow-specific developer copilot. It does not replace testing, review, or platform judgment.</p>
+      <p>&copy; 2026 SN Assistant. All rights reserved. Does not replace testing, review, or platform judgment.</p>
       <div class="footer-links">
         <a href="/">Home</a>
+        <a href="/privacy/">Privacy</a>
         <a href="/terms/">Terms</a>
         <a href="/support/">Support</a>
       </div>
