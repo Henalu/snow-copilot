@@ -362,6 +362,114 @@
     }
 
     /* ── Help & Feedback links ── */
+    .shortcut-status-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      background: #141620;
+      border: 1px solid #2e3352;
+      border-radius: 10px;
+    }
+    .shortcut-status-main {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+    .shortcut-status-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .shortcut-pill {
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 2px 8px;
+      border: 1px solid transparent;
+    }
+    .shortcut-pill--assigned {
+      color: #5effa0;
+      background: rgba(94,255,160,0.12);
+      border-color: rgba(94,255,160,0.24);
+    }
+    .shortcut-pill--unassigned {
+      color: #ffb432;
+      background: rgba(255,180,50,0.12);
+      border-color: rgba(255,180,50,0.24);
+    }
+    .shortcut-pill--loading {
+      color: #7b82a8;
+      background: rgba(123,130,168,0.12);
+      border-color: rgba(123,130,168,0.2);
+    }
+    .command-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .command-empty {
+      font-size: 12px;
+      color: #7b82a8;
+      text-align: center;
+      padding: 16px;
+      background: #141620;
+      border: 1px dashed #2e3352;
+      border-radius: 10px;
+    }
+    .command-row {
+      background: #141620;
+      border: 1px solid #2e3352;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .command-row-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .command-row-full {
+      grid-column: 1 / -1;
+    }
+    .command-row-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .command-preview {
+      font-size: 11px;
+      color: #7b82a8;
+    }
+    .command-preview code {
+      font-size: 11px;
+    }
+    .btn-danger {
+      border-color: rgba(255,107,107,0.3);
+      color: #ff8c8c;
+    }
+    .btn-danger:hover {
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+    }
+    @media (max-width: 640px) {
+      .shortcut-status-card {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .command-row-grid {
+        grid-template-columns: 1fr;
+      }
+      .command-row-full {
+        grid-column: auto;
+      }
+    }
+
     .feedback-links { display: flex; flex-direction: column; gap: 8px; }
     .btn-feedback-link {
       display: flex;
@@ -424,6 +532,49 @@
           <option value="deep">Deep (XML-aware)</option>
         </select>
         <p class="hint">Deep mode tries to read each <code>sys_update_xml</code> payload for richer technical evidence. It is slower, but produces more grounded update set documentation.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Command Palette</div>
+      <p class="section-desc">Open the command palette from any ServiceNow page. Chrome shortcut remapping lives in <code>chrome://extensions/shortcuts</code>, not inside this settings screen.</p>
+
+      <div class="field">
+        <label>Keyboard shortcut</label>
+        <div class="shortcut-status-card">
+          <div class="shortcut-status-main">
+            <div class="shortcut-status-line">
+              <span class="shortcut-pill shortcut-pill--loading" id="commandPaletteShortcutState">Loading</span>
+              <code id="commandPaletteShortcutValue">Ctrl+Shift+K</code>
+            </div>
+            <p class="hint" id="commandPaletteShortcutHint">Open <code>chrome://extensions/shortcuts</code> in the browser to assign or change it.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <strong>Confirm before impersonating</strong>
+            <span>Require an explicit confirmation step before <code>/imp</code> switches user context</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="confirmImpersonation" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Custom navigation commands</label>
+        <p class="hint">Aliases are stored without the leading slash. URL templates accept <code>{{input}}</code>, <code>{{inputEncoded}}</code>, and <code>{{origin}}</code>. Only same-origin ServiceNow paths are allowed.</p>
+        <div class="command-list" id="customCommandsList">
+          <div class="command-empty">No custom commands yet. Add one for your favorite lists, tables, or filtered searches.</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" id="btnAddCustomCommand">Add command</button>
+        </div>
+        <p class="hint" style="margin-top:8px">Examples: <code>/inc</code> → <code>/incident_list.do?sysparm_query=active=true</code> and <code>/usr abel</code> → <code>/sys_user_list.do?sysparm_query=active=true^user_nameLIKE{{inputEncoded}}^ORactive=true^nameLIKE{{inputEncoded}}</code>.</p>
       </div>
     </div>
 

@@ -22,10 +22,20 @@
     "type": "module"
   },
 
+  "commands": {
+    "open-command-palette": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Open the SN Assistant command palette"
+    }
+  },
+
   "content_scripts": [
     {
       "matches": ["https://*.service-now.com/*"],
-      "js": ["content.js"],
+      "js": ["command-palette.js", "content.js"],
       "css": ["sidebar.css"],
       "run_at": "document_idle",
       "all_frames": true

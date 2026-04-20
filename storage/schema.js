@@ -5,6 +5,8 @@ import { DEFAULT_RAG_SETTINGS } from '../rag/config.js';
 export const ACTIONS = ['explain', 'comment', 'refactor', 'ask', 'document'];
 export const PROVIDER_IDS = ['anthropic', 'openai', 'gemini', 'openrouter', 'customEndpoint', 'localLlm'];
 export const RESPONSE_LANGUAGES = ['en', 'es'];
+export const COMMAND_PALETTE_ALIAS_REGEX = /^[a-z0-9][a-z0-9_-]{0,31}$/;
+export const COMMAND_PALETTE_RESERVED_ALIASES = ['help', 'ask', 'explain', 'comment', 'refactor', 'document', 'docset', 'imp'];
 export const PROVIDER_SECRET_FIELDS = {
   anthropic: ['apiKey'],
   openai: ['apiKey'],
@@ -16,6 +18,11 @@ export const PROVIDER_SECRET_FIELDS = {
 
 const LOCAL_PROVIDER_SECRETS_KEY = 'providerSecrets';
 
+export const DEFAULT_COMMAND_PALETTE_SETTINGS = {
+  confirmImpersonation: true,
+  customCommands: []
+};
+
 function normalizePreferredLanguage(value) {
   return RESPONSE_LANGUAGES.includes(value) ? value : 'en';
 }
@@ -23,6 +30,7 @@ function normalizePreferredLanguage(value) {
 export const DEFAULT_SETTINGS = {
   autoShow: true,
   preferredLanguage: 'en',
+  commandPalette: DEFAULT_COMMAND_PALETTE_SETTINGS,
   changeDocumentation: {
     updateSetMode: 'list',
     deepFetchLimit: 12,
@@ -63,6 +71,63 @@ function deepMerge(target, source) {
     }
   }
   return result;
+}
+
+function isSafeCommandUrlTemplate(template) {
+  if (typeof template !== 'string') return false;
+  const trimmed = template.trim();
+  if (!trimmed) return false;
+  if (/^(?:https?|javascript|data|chrome|about|file):/i.test(trimmed)) return false;
+  if (trimmed.startsWith('//')) return false;
+
+  try {
+    const resolved = new URL(
+      trimmed.replace(/\{\{origin\}\}/g, 'https://example.service-now.com'),
+      'https://example.service-now.com'
+    );
+    return resolved.origin === 'https://example.service-now.com';
+  } catch {
+    return false;
+  }
+}
+
+function normalizeCustomCommand(raw, seenAliases) {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const alias = String(raw.alias || '').trim().replace(/^\//, '').toLowerCase();
+  if (!COMMAND_PALETTE_ALIAS_REGEX.test(alias)) return null;
+  if (COMMAND_PALETTE_RESERVED_ALIASES.includes(alias)) return null;
+  if (seenAliases.has(alias)) return null;
+
+  const title = String(raw.title || '').trim();
+  const description = String(raw.description || '').trim();
+  const urlTemplate = String(raw.urlTemplate || '').trim();
+  if (!title || !urlTemplate || !isSafeCommandUrlTemplate(urlTemplate)) return null;
+
+  const id = String(raw.id || `cmd_${alias}`).trim() || `cmd_${alias}`;
+  seenAliases.add(alias);
+
+  return {
+    id,
+    alias,
+    title,
+    description,
+    urlTemplate
+  };
+}
+
+export function normalizeCommandPaletteSettings(raw = {}) {
+  const seenAliases = new Set();
+  const customCommands = Array.isArray(raw.customCommands)
+    ? raw.customCommands
+        .map((command) => normalizeCustomCommand(command, seenAliases))
+        .filter(Boolean)
+    : [];
+
+  return {
+    confirmImpersonation: raw.confirmImpersonation !== false,
+    customCommands
+  };
 }
 
 function buildEmptyProviderSecrets() {
@@ -125,6 +190,9 @@ export function migrateSettings(stored = {}, localState = {}) {
   settings.preferredLanguage = normalizePreferredLanguage(
     stored.preferredLanguage || stored.responseLanguage || settings.preferredLanguage
   );
+  settings.commandPalette = normalizeCommandPaletteSettings(
+    deepMerge(DEFAULT_COMMAND_PALETTE_SETTINGS, stored.commandPalette || {})
+  );
   settings.changeDocumentation = {
     ...DEFAULT_SETTINGS.changeDocumentation,
     ...(stored.changeDocumentation || {})
@@ -162,6 +230,7 @@ export async function saveSettings(settings) {
     chrome.storage.sync.set({
       autoShow: settings.autoShow,
       preferredLanguage: normalizePreferredLanguage(settings.preferredLanguage),
+      commandPalette: normalizeCommandPaletteSettings(settings.commandPalette),
       changeDocumentation: settings.changeDocumentation,
       providers: stripProviderSecrets(settings.providers),
       routing: settings.routing,

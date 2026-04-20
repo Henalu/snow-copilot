@@ -8,6 +8,7 @@ import { prepareActionExecution } from './providers/manager.js';
 const BACKGROUND_ONLY_ACTIONS = new Set(['documentUpdateSet']);
 const BUFFERED_PROGRESS_INTERVAL_MS = 3000;
 const BUFFERED_PROGRESS_CHAR_STEP = 600;
+const COMMAND_OPEN_PALETTE = 'open-command-palette';
 
 chrome.runtime.onInstalled.addListener(async () => {
   const settings = await loadSettings();
@@ -23,11 +24,31 @@ chrome.action.onClicked.addListener((tab) => {
   chrome.runtime.openOptionsPage();
 });
 
+chrome.commands.onCommand.addListener((command) => {
+  if (command !== COMMAND_OPEN_PALETTE) return;
+
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs[0];
+    if (!tab?.id || !/^https:\/\/[^/]+\.service-now\.com\//.test(tab.url || '')) {
+      chrome.runtime.openOptionsPage();
+      return;
+    }
+
+    chrome.tabs.sendMessage(tab.id, { type: 'OPEN_COMMAND_PALETTE' });
+  });
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'TOGGLE_SIDEBAR') {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
         chrome.tabs.sendMessage(tabs[0].id, { type: 'TOGGLE_SIDEBAR' });
+      }
+    });
+  } else if (message.type === 'OPEN_COMMAND_PALETTE') {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, { type: 'OPEN_COMMAND_PALETTE' });
       }
     });
   }

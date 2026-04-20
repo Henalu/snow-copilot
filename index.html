@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SN Assistant | AI Copilot for ServiceNow Developers</title>
-  <meta name="description" content="SN Assistant is an AI copilot for ServiceNow developers. Explain scripts, ask grounded questions, refactor code, and document Update Sets directly in the browser.">
+  <meta name="description" content="SN Assistant is an AI copilot for ServiceNow developers. Explain scripts, use slash commands, open a command palette from anywhere in ServiceNow, and document scripts or Update Sets directly in the browser.">
   <link rel="stylesheet" href="/site.css">
 </head>
 <body>
@@ -33,8 +33,8 @@
         <h1>Built for ServiceNow work that has to hold up in real delivery.</h1>
         <p class="lede">
           SN Assistant helps ServiceNow developers understand scripts, challenge weak patterns,
-          and document code and Update Sets without leaving the platform. It is designed to stay
-          closer to ServiceNow reality and further away from polished nonsense.
+          launch slash commands, and document code or Update Sets without leaving the platform.
+          It is designed to stay closer to ServiceNow reality and further away from polished nonsense.
         </p>
         <div class="cta-row">
           <a class="button" href="https://github.com/Henalu/snow-copilot" target="_blank" rel="noopener">View repository</a>
@@ -46,7 +46,7 @@
         <span class="kicker">Launch model</span>
         <div class="summary-item">
           <div class="summary-label">Current release</div>
-          <div class="summary-value">Free extension, no account required</div>
+          <div class="summary-value">Free extension with command palette, no account required</div>
         </div>
         <div class="summary-item">
           <div class="summary-label">Provider model</div>
@@ -93,6 +93,34 @@
           <article class="card">
             <strong>Document UpdateSet</strong>
             <p>Capture visible Customer Updates and produce change documentation for <code>sys_update_set</code> records.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="shell section">
+      <div class="section-grid">
+        <div class="section-heading">
+          <span class="kicker">Workflow speed</span>
+          <h2>A command palette for the tasks that repeat every day.</h2>
+          <p>Open one surface from anywhere in ServiceNow, run built-in slash commands, or define your own shortcuts for common tables and filtered views.</p>
+        </div>
+        <div class="feature-list">
+          <article class="card">
+            <strong>Keyboard-first palette</strong>
+            <p>Open the palette from any ServiceNow page with a browser shortcut and keep moving without hunting through menus.</p>
+          </article>
+          <article class="card">
+            <strong>Built-in slash commands</strong>
+            <p>Run commands like <code>/ask</code>, <code>/explain</code>, <code>/document</code>, <code>/docset</code>, and <code>/imp</code> from one place.</p>
+          </article>
+          <article class="card">
+            <strong>Custom navigation commands</strong>
+            <p>Create your own aliases for incident lists, user lookups, favorite tables, or saved query patterns inside your current instance.</p>
+          </article>
+          <article class="card">
+            <strong>Context-aware opening</strong>
+            <p>On supported records the assistant opens in full mode; on generic ServiceNow pages the palette becomes the lightweight entry point.</p>
           </article>
         </div>
       </div>

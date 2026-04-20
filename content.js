@@ -295,9 +295,11 @@ function buildActionButtonsMarkup() {
 
 // ─── Sidebar panel ────────────────────────────────────────────────────────────
 
-function createSidebar() {
+function createSidebar(options = {}) {
   if (document.getElementById(SN_ASSISTANT_ID)) return;
   const isUpdateSet = isUpdateSetContext();
+  const hasAssistantContext = hasRelevantAssistantContext();
+  const initialMode = options.initialMode || (hasAssistantContext ? 'assistant' : 'palette');
   const contextPlaceholder = isUpdateSet
     ? 'Add functional or technical context for this Update Set'
     : 'Ask anything about this script...';
@@ -312,12 +314,29 @@ function createSidebar() {
       </div>
       <div class="sna-header-right">
         <span class="sna-context" id="sna-context-label"></span>
+        <button class="sna-header-btn" id="sna-open-commands" title="Command palette">Commands</button>
         <button class="sna-reset-pos" id="sna-reset-pos" title="Reset position &amp; size">⊞</button>
-        <button class="sna-close" id="sna-close" title="Cerrar">×</button>
+        <button class="sna-close" id="sna-close" title="Close">×</button>
       </div>
     </div>
 
     <div class="sna-body" id="sna-body">
+      <div class="sna-command-palette" id="sna-command-palette">
+        <div class="sna-command-bar">
+          <span class="sna-command-prefix">/</span>
+          <input
+            id="sna-command-input"
+            class="sna-command-input"
+            type="text"
+            placeholder="help, ask, explain, imp..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+        </div>
+        <div class="sna-command-meta" id="sna-command-meta"></div>
+        <div class="sna-command-results" id="sna-command-results"></div>
+      </div>
+
       <div class="sna-actions">
         ${buildActionButtonsMarkup()}
       </div>
@@ -354,6 +373,10 @@ function createSidebar() {
 
   document.body.appendChild(sidebar);
   initSidebarEvents(sidebar);
+  initializeCommandPalette(sidebar, {
+    initialMode,
+    openedByPaletteOnly: !!options.openedByPaletteOnly
+  });
   initDragResize(sidebar);
   updateContextLabel();
 }
@@ -368,31 +391,58 @@ function updateContextLabel() {
 
 // ─── Sidebar events ───────────────────────────────────────────────────────────
 
-function initSidebarEvents(sidebar) {
-  document.getElementById('sna-close').addEventListener('click', () => {
-    cancelActiveStream();
-    sidebar.remove();
-    document.getElementById(SN_TRIGGER_ID)?.classList.remove('active');
-  });
+function setActiveSidebarAction(action) {
+  const sidebar = document.getElementById(SN_ASSISTANT_ID);
+  if (!sidebar) return false;
 
   const askBox = document.getElementById('sna-ask-box');
+  const actionBtns = sidebar.querySelectorAll('.sna-action-btn');
+  let matched = false;
+
+  actionBtns.forEach((btn) => {
+    const isActive = btn.dataset.action === action;
+    btn.classList.toggle('active', isActive);
+    matched = matched || isActive;
+  });
+
+  if (askBox) {
+    if (action === 'ask' || action === 'documentUpdateSet') {
+      askBox.style.display = 'flex';
+    } else if (action) {
+      askBox.style.display = 'none';
+    }
+  }
+
+  return matched;
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById(SN_ASSISTANT_ID);
+  if (!sidebar) return;
+
+  cancelActiveStream();
+  sidebar.remove();
+  document.getElementById(SN_TRIGGER_ID)?.classList.remove('active');
+}
+
+function initSidebarEvents(sidebar) {
+  document.getElementById('sna-close').addEventListener('click', () => {
+    closeSidebar();
+  });
+
   const questionInput = document.getElementById('sna-question-input');
   const isUpdateSet = isUpdateSetContext();
   const actionBtns = sidebar.querySelectorAll('.sna-action-btn');
   actionBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const action = btn.dataset.action;
-
-      actionBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      setActiveSidebarAction(action);
 
       if (action === 'ask') {
-        askBox.style.display = 'flex';
+        questionInput.focus();
       } else if (action === 'documentUpdateSet') {
-        askBox.style.display = 'flex';
         runAction(action, questionInput.value.trim());
       } else {
-        askBox.style.display = 'none';
         runAction(action);
       }
     });
@@ -1463,7 +1513,7 @@ function setSidebarBusy(isBusy) {
 
   sidebar.dataset.busy = isBusy ? 'true' : 'false';
 
-  const controls = sidebar.querySelectorAll('.sna-action-btn, #sna-send-question, #sna-question-input');
+  const controls = sidebar.querySelectorAll('.sna-action-btn, #sna-send-question, #sna-question-input, #sna-open-commands, #sna-command-input, .sna-command-result');
   controls.forEach((control) => {
     control.disabled = isBusy;
   });
@@ -1941,14 +1991,25 @@ function createTriggerButton() {
   document.body.appendChild(btn);
 }
 
-function toggleSidebar() {
+function toggleSidebar(options = {}) {
   const existing = document.getElementById(SN_ASSISTANT_ID);
+  const hasAssistantContext = hasRelevantAssistantContext();
+  const requestedMode = options.mode || '';
   if (existing) {
-    cancelActiveStream();
-    existing.remove();
-    document.getElementById(SN_TRIGGER_ID)?.classList.remove('active');
+    if (requestedMode === 'palette') {
+      openCommandPalette({
+        openedByPaletteOnly: options.openedByPaletteOnly ?? !hasAssistantContext
+      });
+      return;
+    }
+
+    closeSidebar();
   } else {
-    createSidebar();
+    const initialMode = requestedMode || (hasAssistantContext ? 'assistant' : 'palette');
+    createSidebar({
+      initialMode,
+      openedByPaletteOnly: options.openedByPaletteOnly ?? (initialMode === 'palette' && !hasAssistantContext)
+    });
     dismissBadge();
     document.getElementById(SN_TRIGGER_ID)?.classList.add('active');
   }
@@ -1959,17 +2020,21 @@ function dismissBadge() {
   if (badge) badge.classList.add('dismissed');
 }
 
+function shouldHandleSidebarMessages() {
+  if (window !== window.top && window.name !== 'gsft_main') return false;
+  if (window === window.top && document.getElementById('gsft_main')) return false;
+  return true;
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
   // Case 1: inner iframe that is NOT gsft_main (widget, portal component, etc.) → skip.
-  if (window !== window.top && window.name !== 'gsft_main') return;
+  if (!shouldHandleSidebarMessages()) return;
 
   // Case 2: we are the top-level frame.
   if (window === window.top) {
     // If gsft_main exists, the form lives inside it — that frame will handle detection.
-    if (document.getElementById('gsft_main')) return;
-
     // If the URL does not match a known SN script record type, nothing to do here.
     // This avoids running on the portal, list views, dashboards, etc.
     if (!detectRecordType().isKnown) return;
@@ -1997,8 +2062,12 @@ async function init() {
 
 try {
   chrome.runtime.onMessage.addListener((message) => {
+    if (!shouldHandleSidebarMessages()) return;
+
     if (message.type === 'TOGGLE_SIDEBAR') {
       toggleSidebar();
+    } else if (message.type === 'OPEN_COMMAND_PALETTE') {
+      toggleSidebar({ mode: 'palette' });
     }
   });
 } catch (error) {

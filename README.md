@@ -7,6 +7,8 @@ SN Assistant is built to be more than a generic LLM wrapper. The current build i
 - multi-provider AI routing
 - ServiceNow-aware prompts and guardrails
 - local RAG grounded with Breaking Trail content
+- command palette with built-in slash commands
+- custom same-origin navigation commands for common ServiceNow tables and searches
 - one-click script documentation as a Word document
 - one-click Update Set documentation
 - `Deep` mode for richer Update Set grounding from `sys_update_xml`
@@ -30,6 +32,7 @@ SN Assistant is built to be more than a generic LLM wrapper. The current build i
 - **Grounding:** Breaking Trail is bundled as a local RAG source for higher-quality `Ask` and `Explain` answers
 - **ServiceNow-specific change docs:** Update Set documentation can run in `List-first` or `Deep` mode
 - **Practical UX:** draggable and resizable panel, execution trace for long-running Update Set docs, direct Word download
+- **Workflow speed:** keyboard shortcut for the command palette, built-in slash commands, and user-defined navigation shortcuts
 - **Language control:** all responses can be generated in English or Spanish from settings
 
 ## Quick start
@@ -55,6 +58,12 @@ For local development or pre-release testing, use the unpacked workflow:
 4. Click **Load unpacked**
 5. Select the repository root, where `manifest.json` lives
 
+For store submission packaging:
+
+1. Run `npm run package:extension`
+2. Upload `dist/sn-assistant-extension.zip`
+3. Do not zip the repository root or the whole `dist/` folder
+
 ### 2. Configure at least one provider
 
 1. Open SN Assistant from the browser toolbar
@@ -66,6 +75,7 @@ For local development or pre-release testing, use the unpacked workflow:
 Optional but recommended:
 
 - choose a preferred response language
+- review the command palette settings and add your own custom commands
 - enable or tune RAG
 - choose the Update Set documentation mode: `List-first` or `Deep`
 
@@ -74,8 +84,14 @@ Optional but recommended:
 #### Script context
 
 1. Open a supported script form in ServiceNow
-2. Click the floating trigger button, or click the toolbar icon while on the ServiceNow tab
+2. Click the floating trigger button, use the command palette shortcut, or click the toolbar icon while on the ServiceNow tab
 3. Choose `Explain`, `Comment`, `Refactor`, `Ask`, or `Document`
+
+#### Generic ServiceNow pages
+
+1. Open any `*.service-now.com` page
+2. Use the command palette shortcut or the toolbar action
+3. Run built-in slash commands or your own custom navigation commands
 
 #### Update Set context
 

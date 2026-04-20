@@ -1,6 +1,14 @@
 // options.js — Settings page controller (ES module)
 
-import { loadSettings, saveSettings, PROVIDER_IDS, ACTIONS } from './storage/schema.js';
+import {
+  loadSettings,
+  saveSettings,
+  PROVIDER_IDS,
+  ACTIONS,
+  COMMAND_PALETTE_ALIAS_REGEX,
+  COMMAND_PALETTE_RESERVED_ALIASES,
+  DEFAULT_COMMAND_PALETTE_SETTINGS
+} from './storage/schema.js';
 import { PROVIDER_META, MODEL_CATALOG, getModelName }         from './providers/catalog.js';
 import { computeRecommendations, applyRecommendations, refreshRecommendedFields } from './recommendation/engine.js';
 import { anthropicProvider }     from './providers/anthropic.js';
@@ -24,6 +32,9 @@ const ACTION_LABELS = { explain: 'Explain', comment: 'Comment', refactor: 'Refac
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
+const COMMAND_PALETTE_SHORTCUT_NAME = 'open-command-palette';
+const DEFAULT_COMMAND_PALETTE_SHORTCUT = 'Ctrl+Shift+K';
+
 let settings = null; // will be loaded on init
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
@@ -36,6 +47,7 @@ async function init() {
 
 function renderAll() {
   renderBehavior();
+  renderCommandPalette();
   renderRag();
   renderProviders();
   renderRouting();
@@ -48,6 +60,177 @@ function renderBehavior() {
   document.getElementById('autoShow').checked = settings.autoShow ?? true;
   document.getElementById('preferredLanguage').value = settings.preferredLanguage || 'en';
   document.getElementById('updateSetMode').value = settings.changeDocumentation?.updateSetMode || 'list';
+}
+
+function renderCommandPalette() {
+  const commandPalette = settings.commandPalette ?? DEFAULT_COMMAND_PALETTE_SETTINGS;
+  document.getElementById('confirmImpersonation').checked = commandPalette.confirmImpersonation !== false;
+  renderCommandPaletteShortcutStatus();
+  renderCustomCommandsList(commandPalette.customCommands || []);
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function createCustomCommandId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `cmd_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function normalizeCommandAlias(value) {
+  return String(value || '').trim().replace(/^\//, '').toLowerCase();
+}
+
+function isSafeCommandUrlTemplate(template) {
+  if (typeof template !== 'string') return false;
+  const trimmed = template.trim();
+  if (!trimmed) return false;
+  if (/^(?:https?|javascript|data|chrome|about|file):/i.test(trimmed)) return false;
+  if (trimmed.startsWith('//')) return false;
+
+  try {
+    const resolved = new URL(
+      trimmed.replace(/\{\{origin\}\}/g, 'https://example.service-now.com'),
+      'https://example.service-now.com'
+    );
+    return resolved.origin === 'https://example.service-now.com';
+  } catch {
+    return false;
+  }
+}
+
+function buildCustomCommandRow(command = {}) {
+  const alias = normalizeCommandAlias(command.alias);
+  const title = String(command.title || '').trim();
+  const description = String(command.description || '').trim();
+  const urlTemplate = String(command.urlTemplate || '').trim();
+
+  return `
+    <div class="command-row" data-command-row data-command-id="${escapeHtml(command.id || createCustomCommandId())}">
+      <div class="command-row-grid">
+        <div class="field">
+          <label>Alias</label>
+          <input type="text" data-command-field="alias" maxlength="32" placeholder="inc" value="${escapeHtml(alias)}">
+        </div>
+        <div class="field">
+          <label>Title</label>
+          <input type="text" data-command-field="title" maxlength="80" placeholder="Open active incidents" value="${escapeHtml(title)}">
+        </div>
+        <div class="field command-row-full">
+          <label>Description</label>
+          <input type="text" data-command-field="description" maxlength="160" placeholder="Shown in the command palette results list" value="${escapeHtml(description)}">
+        </div>
+        <div class="field command-row-full">
+          <label>URL template</label>
+          <input type="text" data-command-field="urlTemplate" placeholder="/incident_list.do?sysparm_query=active=true" value="${escapeHtml(urlTemplate)}">
+        </div>
+      </div>
+      <div class="command-row-actions">
+        <div class="command-preview">Preview: <code data-command-preview>${escapeHtml(alias ? `/${alias}` : '/alias')}</code></div>
+        <button class="btn-secondary btn-danger" data-command-delete>Delete</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderCustomCommandsList(customCommands = []) {
+  const container = document.getElementById('customCommandsList');
+  if (!container) return;
+
+  if (!customCommands.length) {
+    container.innerHTML = '<div class="command-empty">No custom commands yet. Add one for your favorite lists, tables, or filtered searches.</div>';
+    return;
+  }
+
+  container.innerHTML = customCommands.map((command) => buildCustomCommandRow(command)).join('');
+  container.querySelectorAll('[data-command-row]').forEach((row) => refreshCustomCommandRow(row));
+}
+
+function refreshCustomCommandRow(row) {
+  if (!row) return;
+  const aliasInput = row.querySelector('[data-command-field="alias"]');
+  const preview = row.querySelector('[data-command-preview]');
+  if (!aliasInput || !preview) return;
+
+  const alias = normalizeCommandAlias(aliasInput.value);
+  preview.textContent = alias ? `/${alias}` : '/alias';
+}
+
+function collectCustomCommandsFromDom() {
+  return Array.from(document.querySelectorAll('[data-command-row]')).map((row) => ({
+    id: row.dataset.commandId || createCustomCommandId(),
+    alias: normalizeCommandAlias(row.querySelector('[data-command-field="alias"]')?.value || ''),
+    title: (row.querySelector('[data-command-field="title"]')?.value || '').trim(),
+    description: (row.querySelector('[data-command-field="description"]')?.value || '').trim(),
+    urlTemplate: (row.querySelector('[data-command-field="urlTemplate"]')?.value || '').trim()
+  }));
+}
+
+function addCustomCommandRow() {
+  const commands = collectCustomCommandsFromDom();
+  commands.push({
+    id: createCustomCommandId(),
+    alias: '',
+    title: '',
+    description: '',
+    urlTemplate: ''
+  });
+  renderCustomCommandsList(commands);
+}
+
+function deleteCustomCommandRow(row) {
+  const commandId = row?.dataset.commandId;
+  const commands = collectCustomCommandsFromDom().filter((command) => command.id !== commandId);
+  renderCustomCommandsList(commands);
+}
+
+function getAllCommands() {
+  return new Promise((resolve) => {
+    try {
+      chrome.commands.getAll((commands) => {
+        resolve(Array.isArray(commands) ? commands : []);
+      });
+    } catch {
+      resolve([]);
+    }
+  });
+}
+
+async function renderCommandPaletteShortcutStatus() {
+  const badge = document.getElementById('commandPaletteShortcutState');
+  const value = document.getElementById('commandPaletteShortcutValue');
+  const hint = document.getElementById('commandPaletteShortcutHint');
+  if (!badge || !value || !hint) return;
+
+  badge.textContent = 'Loading';
+  badge.className = 'shortcut-pill shortcut-pill--loading';
+  value.textContent = DEFAULT_COMMAND_PALETTE_SHORTCUT;
+  hint.innerHTML = 'Open <code>chrome://extensions/shortcuts</code> in the browser to assign or change it.';
+
+  const commands = await getAllCommands();
+  const paletteCommand = commands.find((command) => command.name === COMMAND_PALETTE_SHORTCUT_NAME);
+
+  if (paletteCommand?.shortcut) {
+    badge.textContent = 'Assigned';
+    badge.className = 'shortcut-pill shortcut-pill--assigned';
+    value.textContent = paletteCommand.shortcut;
+    hint.innerHTML = 'The palette shortcut is active. Open <code>chrome://extensions/shortcuts</code> if you want to remap it.';
+    return;
+  }
+
+  badge.textContent = 'Unassigned';
+  badge.className = 'shortcut-pill shortcut-pill--unassigned';
+  value.textContent = 'Not assigned';
+  hint.innerHTML = 'Chrome did not assign a shortcut. This can happen if you removed it or if the suggested key conflicted. Open <code>chrome://extensions/shortcuts</code> to set one.';
 }
 
 function renderRag() {
@@ -403,6 +586,10 @@ function collectSettings() {
 
   s.autoShow = document.getElementById('autoShow').checked;
   s.preferredLanguage = document.getElementById('preferredLanguage').value || 'en';
+  s.commandPalette = {
+    confirmImpersonation: document.getElementById('confirmImpersonation').checked,
+    customCommands: collectCustomCommandsFromDom()
+  };
   s.changeDocumentation = {
     ...(s.changeDocumentation || {}),
     updateSetMode: document.getElementById('updateSetMode').value || 'list'
@@ -511,6 +698,7 @@ function collectSettings() {
 function validate(s) {
   const errors = [];
   const configured = [];
+  const seenAliases = new Set();
 
   for (const id of PROVIDER_IDS) {
     const config = s.providers[id];
@@ -546,6 +734,44 @@ function validate(s) {
 
   if ((s.rag?.maxChunks ?? 0) < 1) {
     errors.push('Retrieved chunks must be at least 1.');
+  }
+
+  for (const command of s.commandPalette?.customCommands || []) {
+    if (!command.alias && !command.title && !command.description && !command.urlTemplate) {
+      errors.push('Custom commands cannot be left blank. Complete the row or delete it.');
+      break;
+    }
+
+    if (!COMMAND_PALETTE_ALIAS_REGEX.test(command.alias || '')) {
+      errors.push(`Custom command alias "${command.alias || '(empty)'}" is invalid. Use 1-32 chars: lowercase letters, numbers, "_" or "-".`);
+      break;
+    }
+
+    if (COMMAND_PALETTE_RESERVED_ALIASES.includes(command.alias)) {
+      errors.push(`Custom command alias "/${command.alias}" is reserved by a built-in command.`);
+      break;
+    }
+
+    if (seenAliases.has(command.alias)) {
+      errors.push(`Custom command alias "/${command.alias}" is duplicated.`);
+      break;
+    }
+    seenAliases.add(command.alias);
+
+    if (!command.title) {
+      errors.push(`Custom command "/${command.alias}" is missing a title.`);
+      break;
+    }
+
+    if (!command.urlTemplate) {
+      errors.push(`Custom command "/${command.alias}" is missing a URL template.`);
+      break;
+    }
+
+    if (!isSafeCommandUrlTemplate(command.urlTemplate)) {
+      errors.push(`Custom command "/${command.alias}" must use a same-origin ServiceNow path or {{origin}} template.`);
+      break;
+    }
   }
 
   return errors;
@@ -609,6 +835,17 @@ function bindStaticEvents() {
     const section = document.getElementById('action-routing-section');
     section.style.display = e.target.checked ? 'block' : 'none';
     if (e.target.checked) renderActionRoutingTable();
+  });
+
+  document.getElementById('btnAddCustomCommand').addEventListener('click', addCustomCommandRow);
+  document.getElementById('customCommandsList').addEventListener('input', (event) => {
+    const row = event.target.closest('[data-command-row]');
+    if (row) refreshCustomCommandRow(row);
+  });
+  document.getElementById('customCommandsList').addEventListener('click', (event) => {
+    const deleteBtn = event.target.closest('[data-command-delete]');
+    if (!deleteBtn) return;
+    deleteCustomCommandRow(deleteBtn.closest('[data-command-row]'));
   });
 
   // Save button
@@ -726,7 +963,7 @@ async function saveAll() {
   }
 
   await saveSettings(collected);
-  settings = collected;
+  settings = await loadSettings();
 
   renderAll(); // re-render to reflect saved state
   showStatus('✓ Settings saved');

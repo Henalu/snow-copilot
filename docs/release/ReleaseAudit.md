@@ -9,7 +9,7 @@ Date: 2026-03-28
 - Privacy, terms, support, and brand foundation docs already exist.
 - The extension has a clear single purpose for store review: ServiceNow development assistance.
 - Provider calls are centralized through the service worker.
-- The packaging command completes and stages `dist/sn-assistant-extension` for submission.
+- The packaging command stages `dist/sn-assistant-extension` and generates `dist/sn-assistant-extension.zip` for submission.
 
 ## Hardened in this release-prep pass
 

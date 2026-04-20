@@ -39,7 +39,8 @@
 ## Submission packaging
 
 - Run `npm run package:extension`.
-- Zip the contents of `dist/sn-assistant-extension` instead of zipping the full repository root.
+- Upload `dist/sn-assistant-extension.zip`.
+- Do not zip the full repository root or the whole `dist/` folder.
 - Check that `manifest.json` version and listing version notes match.
 - Confirm the options page and injected sidebar have no remote font or stylesheet dependency.
 - Confirm requested permissions are still justified for store review.

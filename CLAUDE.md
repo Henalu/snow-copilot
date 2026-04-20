@@ -6,10 +6,11 @@ Contexto para Claude Code. Leer antes de cualquier tarea.
 
 SN Assistant es una extension Chrome (Manifest V3) que actua como copiloto IA para desarrolladores ServiceNow.
 
-Hoy trabaja sobre dos grandes contextos:
+Hoy trabaja sobre tres grandes superficies:
 
 - scripts de ServiceNow detectados directamente en la instancia
 - Update Sets, con documentacion automatica en modo rapido o profundo
+- una command palette disponible en paginas `*.service-now.com`, incluso cuando no hay contexto de script
 
 El objetivo del producto no es solo reenviar codigo a un modelo, sino aportar:
 
@@ -17,6 +18,7 @@ El objetivo del producto no es solo reenviar codigo a un modelo, sino aportar:
 - routing multi-provider
 - grounding con RAG
 - documentacion tecnica util
+- atajos y slash commands propios para flujos repetitivos
 - una experiencia ligera dentro de la UI de ServiceNow
 
 ## Brand foundation
@@ -41,9 +43,11 @@ Resumen operativo:
 ## Stack
 
 - **Extension:** JavaScript vanilla, Chrome MV3, sin bundler
+- **command-palette.js:** script clasico auxiliar cargado antes de `content.js`
 - **content.js:** script clasico, nunca modulo
 - **service-worker.js:** ES module
 - **options.js:** ES module cargado desde `options.html`
+- **Frontend publico:** `index.html` + `site.css`
 - **Backend opcional:** `api/chat.js` para Custom Endpoint
 - **Providers soportados:** Anthropic, OpenAI, Gemini, OpenRouter, Custom Endpoint, Local LLM
 - **RAG:** indice local empaquetado en `rag/`
@@ -56,7 +60,10 @@ snow-copilot/
 ├── CLAUDE.md
 ├── AGENTS.md
 ├── README.md
+├── index.html
+├── site.css
 ├── manifest.json
+├── command-palette.js
 ├── content.js
 ├── service-worker.js
 ├── options.html
@@ -91,7 +98,11 @@ snow-copilot/
 ├── recommendation/
 │   └── engine.js
 ├── scripts/
-│   └── build-rag-index.mjs
+│   ├── build-rag-index.mjs
+│   └── package-extension.mjs
+├── privacy/
+├── support/
+├── terms/
 └── docs/
     ├── RAG.md
     ├── ChangeDocumentation.md
@@ -152,6 +163,7 @@ En `chrome.storage.sync` viven:
 - estado general de providers
 - routing
 - preferred language
+- command palette settings
 - RAG settings
 - Update Set documentation mode
 
@@ -160,16 +172,40 @@ En `chrome.storage.local` viven:
 - API keys
 - custom auth headers
 
-## Estado actual - 2026-03-24
+Nota importante:
+
+- el shortcut real de la command palette no vive en nuestros settings
+- Chrome/Edge lo gestionan en `chrome://extensions/shortcuts`
+
+## Estado actual - 2026-04-20
 
 ### Funcionalidad principal
 
 - deteccion generica de editores Monaco con varios fallbacks
 - Explain, Comment, Refactor, Ask y Document para scripts
 - Document UpdateSet para `sys_update_set`
+- command palette integrada en el sidebar
+- shortcut sugerido `Ctrl+Shift+K` / `Command+Shift+K`
+- slash commands built-in: `/help`, `/ask`, `/explain`, `/comment`, `/refactor`, `/document`, `/docset`, `/imp`
+- custom commands de navegacion same-origin configurables por el usuario
+- impersonation asistida con `/imp` y confirmacion opcional
 - descarga automatica a Word para `Document` y `Document UpdateSet`
 - panel arrastrable y redimensionable
 - preferred response language en ingles o espanol
+
+### Command palette
+
+Implementado y funcional:
+
+- vive dentro del sidebar existente, no en una ventana aparte
+- puede abrirse desde shortcut, boton `Commands` o mensaje runtime
+- si no hay contexto de script ni Update Set, el sidebar abre directamente en modo palette
+- acepta slash commands con o sin `/` dentro de la propia paleta
+- autocompletado con `Tab`, navegacion con flechas, ejecucion con `Enter`, cierre con `Esc`
+- lista comandos built-in y custom con estado `available` o `disabled`
+- los comandos IA reutilizan `runAction(...)`; no hay un pipeline alternativo
+- los custom commands solo permiten rutas relativas a la instancia actual
+- `/imp` busca usuarios activos por API y ejecuta impersonation via `X-UserToken`
 
 ### RAG
 
@@ -211,6 +247,7 @@ Ultimas mejoras importantes:
 - Update Set docs sin streaming visible de texto largo
 - mejor postproceso para Word
 - mejor manejo de contexto invalidado tras recargar la extension
+- mejor coordinacion entre top frame, `gsft_main` y paginas ServiceNow genericas para abrir sidebar o palette segun contexto
 
 ## Flujo local de desarrollo
 
@@ -234,6 +271,16 @@ Referencia actual:
 {
   autoShow: true,
   preferredLanguage: 'en' | 'es',
+  commandPalette: {
+    confirmImpersonation: boolean,
+    customCommands: Array<{
+      id: string,
+      alias: string,
+      title: string,
+      description: string,
+      urlTemplate: string
+    }>
+  },
   changeDocumentation: {
     updateSetMode: 'list' | 'deep',
     deepFetchLimit: number,
@@ -282,9 +329,13 @@ La fuente real de defaults y migraciones esta en `storage/schema.js`.
 
 ### Experimental or not yet public-release scope
 
-- UI Scripts (`sys_ui_script`)
-- Transform Scripts (`sys_transform_script`)
+- UI Scripts (`sys_ui_script`) - validados en Chrome, pendientes de validacion final en Edge antes de entrar en promesa publica
+- Transform Scripts (`sys_transform_script`) - validados en Chrome, pendientes de validacion final en Edge antes de entrar en promesa publica
 - Background Scripts
+
+Nota actual:
+
+- Background Scripts no se detectan de forma fiable y deben seguir fuera del scope publico garantizado
 
 ## Notas de debugging
 
@@ -326,6 +377,7 @@ Si falla tras recargar la extension y no refrescar la pagina, puede aparecer `Ex
 - cualquier toque serio a `content.js`: revisar con mentalidad CSP-first
 - cualquier cambio de arquitectura: pensar primero en `content.js` + `service-worker.js` + `storage/schema.js`
 - antes de merge a `main`: revisar `content.js` y `manifest.json`
+- si un cambio toca estilos publicos, layout, navegacion, settings o copy visible de producto y va a acabar en produccion, validar antes con el usuario antes de hacer merge o push a `main`
 
 ## Comandos Impeccable - Cuándo Ejecutar
 
